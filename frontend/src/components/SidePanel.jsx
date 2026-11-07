@@ -25,12 +25,11 @@ export default function SidePanel() {
   const productById = useStore((s) => s.productById);
   const { setPref, suggest, openPanel } = useStore.getState();
 
-  // Money is calculated on what's in the room; if nothing is placed yet, on the whole inventory.
-  const inRoom = useMemo(() => {
-    const uids = new Set(placed.map((p) => p.uid));
-    const source = placed.length ? inventory.filter((i) => uids.has(i.uid)) : inventory;
-    return source.map((i) => productById[i.productId]).filter(Boolean);
-  }, [placed, inventory, productById]);
+  // Money covers everything picked: items in the room and items still in the inventory.
+  const inRoom = useMemo(
+    () => [...placed, ...inventory].map((i) => productById[i.productId]).filter(Boolean),
+    [placed, inventory, productById],
+  );
   const sum = useMemo(() => summarise(inRoom, prefs), [inRoom, prefs]);
 
   return (
@@ -119,7 +118,7 @@ export default function SidePanel() {
           <div><dt>Per year of use</dt><dd className="num">{gbp(sum.perYear)}</dd></div>
         </dl>
         <p className="fine">
-          {placed.length ? 'For the items in your room.' : 'For everything in your inventory.'} Resale and lifespan are estimates.
+          For everything in your room and inventory. Resale and lifespan are estimates.
         </p>
         <button className="btn wide primary" onClick={() => openPanel('plan')} disabled={!inRoom.length}>
           Plan when to buy

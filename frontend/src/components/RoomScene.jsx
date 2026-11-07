@@ -177,14 +177,15 @@ export default function RoomScene({ bridgeRef }) {
   const view = useStore((s) => s.view);
   const dragging = useStore((s) => s.dragging);
   const placedItems = useStore((s) => s.placed);
-  const inventory = useStore((s) => s.inventory);
   const productById = useStore((s) => s.productById);
 
-  const items = useMemo(() => {
-    const byUid = Object.fromEntries(inventory.map((i) => [i.uid, productById[i.productId]]));
-    return placedItems.map((pl) => ({ ...pl, product: byUid[pl.uid] })).filter((pl) => pl.product);
-  }, [placedItems, inventory, productById]);
-  const maxPrice = Math.max(1, ...items.map((i) => i.product.price));
+  const items = useMemo(
+    () => placedItems.map((pl) => ({ ...pl, product: productById[pl.productId] })).filter((pl) => pl.product),
+    [placedItems, productById],
+  );
+  const prices = items.map((i) => i.product.price);
+  const lo = Math.min(...prices), hi = Math.max(...prices);
+  const heatT = (price) => (hi > lo ? (price - lo) / (hi - lo) : 0.5);
 
   if (!room) return null;
   const W = room.width / 100, D = room.depth / 100;
@@ -212,7 +213,7 @@ export default function RoomScene({ bridgeRef }) {
       {view === 'plan' && <Grid room={room} />}
       <Door room={room} />
       {items.map((it) => (
-        <Furniture key={it.uid} item={it} heatT={it.product.price / maxPrice} />
+        <Furniture key={it.uid} item={it} heatT={heatT(it.product.price)} />
       ))}
       {view === 'plan' ? (
         <>
@@ -222,7 +223,6 @@ export default function RoomScene({ bridgeRef }) {
             maxPolarAngle={Math.PI / 2.15}
             minDistance={1.5}
             maxDistance={25}
-            target={[W / 2, 0, D / 2]}
           />
           <PlanCamera room={room} />
         </>

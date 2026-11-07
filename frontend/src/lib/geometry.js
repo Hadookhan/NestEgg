@@ -3,6 +3,8 @@
 // A placed item is { uid, x, z, rot } where x/z is the footprint centre and
 // rot (0-3) says which wall the item's back faces: 0 north, 1 west, 2 south, 3 east.
 
+import { arePartners, clearanceOf, ruleOf } from './furniture.js';
+
 export const GRID = 50; // visible tiles
 export const SNAP = 10; // drag snapping
 export const DOOR_DEPTH = 90; // keep-clear zone inside the door
@@ -85,36 +87,84 @@ export function findNearestFree(p, x, z, room, others, rots = [0, 1, 2, 3], maxR
   return null;
 }
 
-// ---------- Suggest place ----------
-
-const WALL_ITEMS = new Set([
-  'bed', 'wardrobe', 'drawers', 'mirror', 'sofa', 'tv_stand', 'bookshelf', 'desk',
-  'filing_cabinet', 'sideboard', 'bath_cabinet', 'bath_shelf', 'towel_stand', 'shoe_rack',
-]);
-const CENTRED_ON_WALL = new Set(['bed', 'sofa', 'tv_stand', 'sideboard']);
-const CENTRE_ITEMS = new Set(['coffee_table', 'dining_table']);
-const NEXT_TO = { bedside: 'bed' };
-const CHAIR_FOR = { office_chair: ['desk'], dining_chair: ['dining_table'] };
+// ---------- clear space (doors opening, chairs pulling out, legroom) ----------
 
 // Direction an item's back faces, per rot; its front faces the opposite way.
 const BACK = [[0, -1], [-1, 0], [0, 1], [1, 0]];
 const rotWithBack = (dx, dz) => BACK.findIndex(([bx, bz]) => bx === dx && bz === dz);
+const frontDir = (rot) => [-BACK[rot][0], -BACK[rot][1]];
 
-function frontRect(rect, rot, depth) {
-  const r = { ...rect };
-  if (rot === 0) r.z2 += depth;
-  if (rot === 1) r.x2 += depth;
-  if (rot === 2) r.z1 -= depth;
-  if (rot === 3) r.x1 -= depth;
-  return r;
+function frontStrip(rect, rot, depth) {
+  if (rot === 0) return { x1: rect.x1, x2: rect.x2, z1: rect.z2, z2: rect.z2 + depth };
+  if (rot === 1) return { x1: rect.x2, x2: rect.x2 + depth, z1: rect.z1, z2: rect.z2 };
+  if (rot === 2) return { x1: rect.x1, x2: rect.x2, z1: rect.z1 - depth, z2: rect.z1 };
+  return { x1: rect.x1 - depth, x2: rect.x1, z1: rect.z1, z2: rect.z2 };
 }
 
-function wallCandidates(p, room, order) {
+/** Areas an item needs kept clear, as rects (not including the item itself). */
+export function zonesOf(p, x, z, rot) {
+  const { front, around } = clearanceOf(p);
+  const r = rectAt(p, x, z, rot);
+  const zones = [];
+  if (around > 0) {
+    zones.push({ x1: r.x1 - around, x2: r.x2 + around, z1: r.z1 - around, z2: r.z2 + around });
+  } else if (front > 0) {
+    zones.push(frontStrip(r, rot, front));
+  }
+  return zones;
+}
+
+/**
+ * For the clearance warnings: what's sitting in this item's clear space,
+ * and whose clear space this item is sitting in. Partners don't count.
+ */
+export function clearanceConflicts(item, all) {
+  const mine = zonesOf(item.product, item.x, item.z, item.rot);
+  const myRect = rectAt(item.product, item.x, item.z, item.rot);
+  const blockedBy = [];
+  const blocking = [];
+  for (const o of all) {
+    if (o.uid === item.uid || arePartners(item.product, o.product)) continue;
+    const oRect = rectAt(o.product, o.x, o.z, o.rot);
+    if (mine.some((zr) => overlaps(zr, oRect))) blockedBy.push(o);
+    if (zonesOf(o.product, o.x, o.z, o.rot).some((zr) => overlaps(zr, myRect))) blocking.push(o);
+  }
+  return { blockedBy, blocking };
+}
+
+/** Valid spot that also respects everyone's clear space (unless relaxed). */
+function fits(p, c, room, others, relaxed) {
+  if (!canPlace(p, c.x, c.z, c.rot, room, others)) return false;
+  if (relaxed) return true;
+  const r = rectAt(p, c.x, c.z, c.rot);
+  const mine = zonesOf(p, c.x, c.z, c.rot);
+  for (const o of others) {
+    if (arePartners(p, o.product)) continue;
+    if (mine.some((zr) => overlaps(zr, o.rect))) return false;
+    if (o.zones.some((zr) => overlaps(zr, r))) return false;
+  }
+  return true;
+}
+
+function firstFit(p, cands, room, others, relaxed = false) {
+  for (const c of cands) {
+    const cc = { ...c, ...clampCentre(p, c.x, c.z, c.rot, room) };
+    if (Math.abs(cc.x - c.x) > 1 || Math.abs(cc.z - c.z) > 1) continue; // would have to move off the intended spot
+    if (fits(p, cc, room, others, relaxed)) return cc;
+  }
+  return null;
+}
+
+// ---------- candidate spots ----------
+
+function wallCandidates(p, room, align = 'corner') {
   const walls = [0, 2, 1, 3].sort((a, b) => {
     const la = a % 2 === 0 ? room.width : room.depth;
     const lb = b % 2 === 0 ? room.width : room.depth;
     return lb - la;
   });
+  const door = doorRect(room);
+  const doorMid = door ? { x: (door.x1 + door.x2) / 2, z: (door.z1 + door.z2) / 2 } : null;
   const out = [];
   for (const rot of walls) {
     const f = footprint(p, rot);
@@ -123,7 +173,7 @@ function wallCandidates(p, room, order) {
     const ts = [];
     for (let t = half; t <= along - half + EPS; t += SNAP) ts.push(t);
     if (ts.length && ts[ts.length - 1] < along - half - EPS) ts.push(along - half);
-    if (order === 'centre') ts.sort((a, b) => Math.abs(a - along / 2) - Math.abs(b - along / 2));
+    if (align === 'centre') ts.sort((a, b) => Math.abs(a - along / 2) - Math.abs(b - along / 2));
     for (const t of ts) {
       if (rot === 0) out.push({ x: t, z: f.d / 2, rot });
       if (rot === 2) out.push({ x: t, z: room.depth - f.d / 2, rot });
@@ -131,117 +181,141 @@ function wallCandidates(p, room, order) {
       if (rot === 3) out.push({ x: room.width - f.w / 2, z: t, rot });
     }
   }
+  if (align === 'door' && doorMid) {
+    out.sort((a, b) => Math.hypot(a.x - doorMid.x, a.z - doorMid.z) - Math.hypot(b.x - doorMid.x, b.z - doorMid.z));
+  }
   return out;
 }
 
-function tryCandidates(p, cands, room, others, clearance = 0) {
-  for (const c of cands) {
-    if (!canPlace(p, c.x, c.z, c.rot, room, others)) continue;
-    if (clearance > 0) {
-      const fr = frontRect(rectAt(p, c.x, c.z, c.rot), c.rot, clearance);
-      if (others.some((o) => overlaps(fr, o.rect))) continue;
-    }
-    return c;
-  }
-  return null;
-}
-
-function nextToCandidates(p, target) {
-  const k = target.rot;
-  const f = footprint(p, k);
-  const r = target.rect;
+function nearCandidates(p, t, how, room) {
+  const tf = footprint(t.product, t.rot);
+  const r = t.rect;
   const gap = 5;
-  if (k === 0) return [{ x: r.x1 - gap - f.w / 2, z: f.d / 2, rot: k }, { x: r.x2 + gap + f.w / 2, z: f.d / 2, rot: k }];
-  if (k === 2) return [{ x: r.x1 - gap - f.w / 2, z: r.z2 - f.d / 2, rot: k }, { x: r.x2 + gap + f.w / 2, z: r.z2 - f.d / 2, rot: k }];
-  if (k === 1) return [{ x: f.w / 2, z: r.z1 - gap - f.d / 2, rot: k }, { x: f.w / 2, z: r.z2 + gap + f.d / 2, rot: k }];
-  return [{ x: r.x2 - f.w / 2, z: r.z1 - gap - f.d / 2, rot: k }, { x: r.x2 - f.w / 2, z: r.z2 + gap + f.d / 2, rot: k }];
-}
-
-/** Chair positions facing a desk (front only) or a table (all four sides). */
-function chairCandidates(p, target) {
-  const dirs = CENTRE_ITEMS.has(target.product.category)
-    ? [[0, 1], [0, -1], [-1, 0], [1, 0]]
-    : [[-BACK[target.rot][0], -BACK[target.rot][1]]];
-  const tf = footprint(target.product, target.rot);
+  if (how === 'beside') {
+    const k = t.rot;
+    const f = footprint(p, k);
+    // Flush to the same wall the target backs onto, either side of it.
+    if (k === 0) return [{ x: r.x2 + gap + f.w / 2, z: r.z1 + f.d / 2, rot: k }, { x: r.x1 - gap - f.w / 2, z: r.z1 + f.d / 2, rot: k }];
+    if (k === 2) return [{ x: r.x2 + gap + f.w / 2, z: r.z2 - f.d / 2, rot: k }, { x: r.x1 - gap - f.w / 2, z: r.z2 - f.d / 2, rot: k }];
+    if (k === 1) return [{ x: r.x1 + f.w / 2, z: r.z2 + gap + f.d / 2, rot: k }, { x: r.x1 + f.w / 2, z: r.z1 - gap - f.d / 2, rot: k }];
+    return [{ x: r.x2 - f.w / 2, z: r.z2 + gap + f.d / 2, rot: k }, { x: r.x2 - f.w / 2, z: r.z1 - gap - f.d / 2, rot: k }];
+  }
+  if (how === 'front') {
+    const [dx, dz] = frontDir(t.rot);
+    const f = footprint(p, t.rot);
+    const off = dx !== 0 ? tf.w / 2 + 45 + f.w / 2 : tf.d / 2 + 45 + f.d / 2;
+    return [{ x: t.x + dx * off, z: t.z + dz * off, rot: t.rot }];
+  }
+  if (how === 'opposite') {
+    const rot = (t.rot + 2) % 4;
+    // Same position along the room's axis as the target, on the facing wall.
+    return wallCandidates(p, room, 'corner')
+      .filter((c) => c.rot === rot)
+      .sort((a, b) => (rot % 2 === 0 ? Math.abs(a.x - t.x) - Math.abs(b.x - t.x) : Math.abs(a.z - t.z) - Math.abs(b.z - t.z)));
+  }
+  // Seats that face the target: 'facing' = its front, 'sides' = its left/right, 'around' = all sides.
+  let dirs;
+  if (how === 'facing') dirs = [frontDir(t.rot)];
+  else if (how === 'sides') dirs = t.rot % 2 === 0 ? [[-1, 0], [1, 0]] : [[0, -1], [0, 1]];
+  else dirs = [[0, 1], [0, -1], [-1, 0], [1, 0]];
   return dirs.map(([dx, dz]) => {
     const rot = rotWithBack(dx, dz);
     const f = footprint(p, rot);
     const off = dx !== 0 ? tf.w / 2 + f.w / 2 + 2 : tf.d / 2 + f.d / 2 + 2;
-    return { x: target.x + dx * off, z: target.z + dz * off, rot };
+    return { x: t.x + dx * off, z: t.z + dz * off, rot };
   });
 }
 
-function rank(cat) {
-  if (WALL_ITEMS.has(cat)) return 0;
-  if (CENTRE_ITEMS.has(cat)) return 1;
-  if (NEXT_TO[cat]) return 2;
-  if (CHAIR_FOR[cat]) return 3;
-  return 4;
+function spiral(p, room, rots) {
+  const out = [];
+  const cx = room.width / 2, cz = room.depth / 2;
+  const R = Math.max(room.width, room.depth);
+  for (let r = 0; r <= R; r += SNAP) {
+    for (let dx = -r; dx <= r; dx += SNAP) {
+      for (let dz = -r; dz <= r; dz += SNAP) {
+        if (Math.max(Math.abs(dx), Math.abs(dz)) !== r) continue;
+        for (const rot of rots) out.push({ x: snap(cx + dx), z: snap(cz + dz), rot });
+      }
+    }
+  }
+  return out;
 }
 
-function placeOne(item, result, room) {
-  const p = item.product;
-  const cat = p.category;
-  const others = rectsOf(result);
-  const W = room.width, D = room.depth;
+// ---------- Suggest place ----------
 
-  if (NEXT_TO[cat]) {
-    for (const t of others.filter((o) => o.product.category === NEXT_TO[cat])) {
-      const c = tryCandidates(p, nextToCandidates(p, t), room, others);
-      if (c) return c;
+// Big anchors first, then the things that relate to them.
+const ORDER = ['bed', 'sofa', 'dining_table', 'desk', 'wardrobe', 'bath_cabinet', 'sideboard', 'tv_stand',
+  'drawers', 'bookshelf', 'coffee_table', 'filing_cabinet', 'bedside', 'office_chair', 'dining_chair',
+  'armchair', 'mirror', 'bath_shelf', 'towel_stand', 'shoe_rack', 'hamper', 'floor_lamp', 'stool'];
+const orderOf = (cat) => {
+  const i = ORDER.indexOf(cat);
+  return i === -1 ? ORDER.length : i;
+};
+
+function placeOne(p, result, room, onlyRot = null) {
+  const rule = ruleOf(p);
+  const others = result.map((o) => ({ ...o, rect: rectAt(o.product, o.x, o.z, o.rot), zones: zonesOf(o.product, o.x, o.z, o.rot) }));
+
+  for (const pass of [false, true]) { // strict first, then ignore clear space if the room is tight
+    for (const n of rule.near || []) {
+      for (const t of others.filter((o) => n.to.includes(o.product.category))) {
+        let nc = nearCandidates(p, t, n.how, room);
+        if (onlyRot !== null) nc = nc.filter((c) => c.rot === onlyRot);
+        const c = firstFit(p, nc, room, others, pass);
+        if (c) return { ...c, relaxed: pass };
+      }
     }
+    let cands;
+    if (rule.place === 'wall') cands = wallCandidates(p, room, rule.align);
+    else if (rule.place === 'centre') cands = spiral(p, room, [0, 1]);
+    else cands = [...wallCandidates(p, room, 'corner'), ...spiral(p, room, [0, 1, 2, 3])];
+    if (onlyRot !== null) cands = cands.filter((c) => c.rot === onlyRot);
+    const c = firstFit(p, cands, room, others, pass);
+    if (c) return { ...c, relaxed: pass };
   }
-  if (CHAIR_FOR[cat]) {
-    for (const t of others.filter((o) => CHAIR_FOR[cat].includes(o.product.category))) {
-      const c = tryCandidates(p, chairCandidates(p, t), room, others);
-      if (c) return c;
+  return null;
+}
+
+function greedy(order, placed, room, anchorRot) {
+  const result = [...placed];
+  const added = [];
+  const failed = [];
+  let squeezed = 0;
+  order.forEach((item, i) => {
+    const pos = fitsRoom(item.product, room)
+      ? placeOne(item.product, result, room, i === 0 ? anchorRot : null)
+      : null;
+    if (pos) {
+      const pl = { ...item, x: pos.x, z: pos.z, rot: pos.rot };
+      result.push(pl);
+      added.push(pl);
+      if (pos.relaxed) squeezed++;
+    } else {
+      failed.push(item);
     }
-  }
-  if (cat === 'coffee_table') {
-    const sofa = others.find((o) => o.product.category === 'sofa');
-    if (sofa) {
-      const [bx, bz] = BACK[sofa.rot];
-      const sf = footprint(sofa.product, sofa.rot);
-      const tf = footprint(p, sofa.rot);
-      const off = bx !== 0 ? sf.w / 2 + 45 + tf.w / 2 : sf.d / 2 + 45 + tf.d / 2;
-      const c = tryCandidates(p, [{ x: sofa.x - bx * off, z: sofa.z - bz * off, rot: sofa.rot }], room, others);
-      if (c) return c;
-    }
-  }
-  if (CENTRE_ITEMS.has(cat)) {
-    return findNearestFree(p, W / 2, D / 2, room, others, [0, 1], Math.max(W, D));
-  }
-  if (WALL_ITEMS.has(cat)) {
-    const cands = wallCandidates(p, room, CENTRED_ON_WALL.has(cat) ? 'centre' : 'corner');
-    return tryCandidates(p, cands, room, others, 50) || tryCandidates(p, cands, room, others, 0);
-  }
-  // Free-standing (lamps, armchairs, hampers...): along a wall, else anywhere.
-  return (
-    tryCandidates(p, wallCandidates(p, room, 'corner'), room, others, 30) ||
-    findNearestFree(p, W / 2, D / 2, room, others, [0, 1, 2, 3], Math.max(W, D))
-  );
+  });
+  const conflicts = added.reduce((s, it) => s + clearanceConflicts(it, result).blockedBy.length, 0);
+  return { added, failed, squeezed, score: failed.length * 100 + conflicts * 10 + squeezed };
 }
 
 /**
  * Place every item in `toPlace` ([{ uid, product }]) around the existing
- * `placed` items ([{ uid, x, z, rot, product }]). Never overlaps anything.
+ * `placed` items ([{ uid, x, z, rot, product }]). Never overlaps anything,
+ * and keeps doors, drawers and walkways clear whenever the room allows.
+ * The biggest item is tried against each wall, and the layout with the
+ * fewest items left out or squeezed wins.
  */
 export function autoPlace(toPlace, placed, room) {
-  const result = [...placed];
-  const added = [];
-  const failed = [];
   const order = [...toPlace].sort(
-    (a, b) => rank(a.product.category) - rank(b.product.category) || b.product.w * b.product.d - a.product.w * a.product.d,
+    (a, b) => orderOf(a.product.category) - orderOf(b.product.category) || b.product.w * b.product.d - a.product.w * a.product.d,
   );
-  for (const item of order) {
-    const pos = fitsRoom(item.product, room) ? placeOne(item, result, room) : null;
-    if (pos) {
-      const pl = { uid: item.uid, x: pos.x, z: pos.z, rot: pos.rot, product: item.product };
-      result.push(pl);
-      added.push(pl);
-    } else {
-      failed.push(item);
+  let best = greedy(order, placed, room, null);
+  if (order.length > 1 && best.score > 0) {
+    for (const rot of [0, 1, 2, 3]) {
+      const attempt = greedy(order, placed, room, rot);
+      if (attempt.score < best.score) best = attempt;
     }
   }
-  return { added, failed };
+  const { added, failed, squeezed } = best;
+  return { added, failed, squeezed };
 }

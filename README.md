@@ -147,15 +147,27 @@ Then put the https address in `frontend/.env` as `VITE_PUBLIC_URL` and restart `
 
 | Action | How |
 |---|---|
-| Place an item | Drag it from the hotbar onto the floor, or press 1–9 (or click a slot) and then click the floor |
+| Place an item | Drag it from the hotbar onto the floor, or press 1–9 (or click a slot) and then click the floor. Placed items leave the inventory |
 | Move | Drag it in Plan view. It snaps to 10 cm and won't pass through walls, other furniture or the door's keep-clear zone (amber) |
 | Rotate | Select it, then R |
-| Take out of room | Select it, then Delete |
+| Back to inventory | Select it, then Delete |
+| Bin | Drag a hotbar slot or a room item onto the bin, or select an item and click the bin. Undo appears for a few seconds |
 | All items | E, or the All items button |
 | Close or cancel | Esc |
 | Look around | Stand in room, then drag (or Use phone motion) |
 
 Grid tiles are 50 cm. Snapping is finer (10 cm) so small items like bedside tables don't waste space.
+
+## How furniture behaves
+
+`frontend/src/lib/furniture.js` describes each kind of furniture: whether it goes against a wall or in the open, what it belongs with, and what space it needs. "Suggest place" uses these rules:
+
+- Chairs face desks and go round dining tables. Bedside tables go beside the bed, the coffee table in front of the sofa, the TV on the wall opposite the sofa, and the shoe rack near the door.
+- Wardrobes, cabinets and sideboards keep space in front for their doors to swing (about one door's width). Drawers keep most of their depth plus room to stand.
+- Beds, sofas, desks and dining tables keep walking, legroom or chair space clear. Items that belong together, like a chair at a desk, may use each other's space.
+- The biggest item is tried against each wall, and the layout with the fewest problems wins. If the room is too tight, items still go in, but they're reported as squeezed.
+
+Select an item to see its clear space shaded on the floor (red if something is in the way), its doors or drawers open, and a warning naming whatever blocks it.
 
 ## The money features
 
@@ -163,7 +175,7 @@ Grid tiles are 50 cm. Snapping is finer (10 cm) so small items like bedside tabl
 - **Real cost after resale.** "Staying for" sets how long you'll stay. Each item shows its price, its estimated resale value when you leave, and the difference: what it really costs you. Second-hand items lose less value, which often makes them cheaper overall.
 - **Cost per year of use.** Price divided by expected lifespan, which exposes "buy cheap, buy twice".
 - **Cheaper options that fit this spot.** Select an item to see cheaper items of the same kind that fit its footprint. Swap with one click and it stays where it is.
-- **Cost heatmap.** Tints furniture from green to red by price, so you can see where the money went.
+- **Cost heatmap.** Tints furniture from green (cheapest in the room) to red (most expensive), with a key showing the price range.
 - **Plan when to buy.** Enter savings, take-home pay, rent and bills, payday and a safety buffer. The plan buys essentials first, then the rest. It charts your balance against your buffer and tells you when you'll be fully furnished.
 
 All estimates are simple and labelled as such. The formulas are in `frontend/src/lib/finance.js`.
@@ -187,9 +199,25 @@ All estimates are simple and labelled as such. The formulas are in `frontend/src
 
 - **"Can't reach the NestEgg server"**: the backend isn't running on port 8000.
 - **The QR code shows 127.0.0.1**: set `VITE_PUBLIC_URL` in `frontend/.env` to `http://<your-laptop-ip>:5173`.
-- **Phone can't open the link**: you're on separate networks or the Wi-Fi isolates devices. Use a hotspot or the tunnel above.
+- **Phone can't open the link**: see "If the QR code doesn't work" below.
 - **Listings use the basic parser**: check the n8n workflow is Active, `N8N_NORMALISE_URL` uses `/webhook/`, not `/webhook-test/`, and the API key is set.
 - **"Not enough space to turn it here"**: drag the item somewhere clearer, then rotate.
+
+## If the QR code doesn't work
+
+The QR code is just a link. If typing the same address into the phone's browser doesn't load either, the problem is the network or the firewall, not the browser or the code. Work through these in order:
+
+1. **Check the address.** Compare it with the `Network:` line printed by `npm run dev`. Laptops often have several addresses (Wi-Fi, Ethernet, Docker, WSL, VPN), and only the Wi-Fi one works. The setup screen lets you pick another. If you set `VITE_PUBLIC_URL`, restart `npm run dev` after any change.
+2. **Open the firewall for port 5173** (only the frontend; it forwards to the backend itself).
+   - Windows: in Settings ▸ Network, set the Wi-Fi to **Private**. Then, in PowerShell as administrator, run:
+     `New-NetFirewallRule -DisplayName "NestEgg dev server" -Direction Inbound -Protocol TCP -LocalPort 5173 -Action Allow -Profile Private`
+     Also accept the "Allow Node.js" prompt if it appears.
+   - Mac: System Settings ▸ Network ▸ Firewall ▸ Options, and allow incoming connections for `node`.
+3. **Check the network allows it.** Event and university Wi-Fi (including eduroam) usually stops devices from reaching each other. Turn on a phone hotspot, connect the laptop to it, and use the new address the setup screen shows. This is the most reliable option at a hackathon.
+4. **Browser quirks.** If the phone changes `http://` to `https://`, type the address again starting with `http://`. Open the link in Safari or Chrome rather than inside another app.
+5. **Still stuck?** Use the tunnel described in "Using your phone". It works on any network.
+
+When the phone page shows **Connected to your computer**, the whole chain works. If it says the phone reached the planner but not the server, start the backend.
 
 ## Roadmap ideas for the final slide
 

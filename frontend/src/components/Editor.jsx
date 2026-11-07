@@ -10,6 +10,7 @@ import FindItemModal from './FindItemModal.jsx';
 import CashflowModal from './CashflowModal.jsx';
 import RoomSetup from './RoomSetup.jsx';
 import Toast from './Toast.jsx';
+import HeatmapKey from './HeatmapKey.jsx';
 
 function useSessionSync(sessionId) {
   const setRoom = useStore((s) => s.setRoom);
@@ -86,9 +87,7 @@ function useShortcuts() {
         useStore.setState({ armedUid: null });
       } else if (/^[1-9]$/.test(key)) {
         const entry = s.inventory[Number(key) - 1];
-        if (!entry) return;
-        if (s.placed.some((p) => p.uid === entry.uid)) s.select(entry.uid);
-        else s.arm(entry.uid);
+        if (entry) s.arm(entry.uid);
       } else if (key === 'r' && s.selectedUid) {
         s.rotate(s.selectedUid);
       } else if ((key === 'delete' || key === 'backspace') && s.selectedUid) {
@@ -188,7 +187,7 @@ export default function Editor({ sessionId }) {
           <p className="stage-hint">
             {armedUid
               ? 'Click the floor to place it. Esc to cancel.'
-              : 'Drag items to move. R rotates, Delete takes it out of the room. Each tile is 50 cm.'}
+              : 'Drag items to move, or onto the bin to bin them. R rotates, Delete puts it back in your inventory. Each tile is 50 cm.'}
           </p>
         )}
         {room && view === 'stand' && (
@@ -199,6 +198,7 @@ export default function Editor({ sessionId }) {
             </button>
           </div>
         )}
+        {room && heatmap && <HeatmapKey />}
         {room && view === 'plan' && <SelectedCard />}
         <Hotbar />
       </main>

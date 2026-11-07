@@ -23,15 +23,14 @@ export default function CashflowModal() {
   const productById = useStore((s) => s.productById);
   const { setMoney, closePanel, select } = useStore.getState();
 
-  const items = useMemo(() => {
-    const uids = new Set(placed.map((p) => p.uid));
-    const src = placed.length ? inventory.filter((i) => uids.has(i.uid)) : inventory;
-    return src.map((i) => ({ uid: i.uid, product: productById[i.productId] })).filter((i) => i.product);
-  }, [placed, inventory, productById]);
+  const items = useMemo(
+    () => [...placed, ...inventory].map((i) => ({ uid: i.uid, product: productById[i.productId] })).filter((i) => i.product),
+    [placed, inventory, productById],
+  );
   const plan = useMemo(() => planPurchases(items, money), [items, money]);
 
   let headline;
-  if (!items.length) headline = 'Add items to your room to plan purchases.';
+  if (!items.length) headline = 'Add items to plan purchases.';
   else if (plan.doneLabel === 'Today') headline = `You can buy everything today and keep ${gbp(plan.buffer)} spare.`;
   else if (plan.doneLabel) headline = `Fully furnished by ${plan.doneLabel}, never dropping below ${gbp(plan.buffer)}.`;
   else if (plan.monthly <= 0) headline = 'Your monthly costs use all your income, so nothing more can be bought. Lower the buffer or swap to cheaper items.';
@@ -97,7 +96,7 @@ export default function CashflowModal() {
                 {plan.remaining.map((it, i) => (
                   <span key={it.uid}>
                     {i > 0 && ', '}
-                    <button className="link" onClick={() => { closePanel(); select(it.uid); }}>{it.product.name}</button>
+                    <button className="link" onClick={() => { closePanel(); if (placed.some((p) => p.uid === it.uid)) select(it.uid); }}>{it.product.name}</button>
                   </span>
                 ))}
               </p>

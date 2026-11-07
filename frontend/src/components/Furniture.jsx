@@ -2,6 +2,8 @@ import { useMemo, useRef } from 'react';
 import { useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 import { useStore } from '../store.js';
+import { clearanceOf, doorCount, ruleOf } from '../lib/furniture.js';
+import { clearanceConflicts } from '../lib/geometry.js';
 
 const FLOOR = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
 const HIT = new THREE.Vector3();
@@ -103,6 +105,60 @@ function Shape({ category, W, D, H, color }) {
   }
 }
 
+/** Doors swung open or the top drawer pulled out, shown while the item is selected. */
+function OpenPreview({ product, W, D, H, color }) {
+  const opens = ruleOf(product).opens;
+  if (opens === 'doors') {
+    const n = doorCount(product);
+    const dw = W / n;
+    const h = Math.min(H * 0.92, H - 0.06);
+    // Doors open 90 degrees, hinged at their outer edges (pairs open from the middle).
+    return Array.from({ length: n }, (_, i) => {
+      const leftHinge = n === 1 || i < n / 2;
+      const hingeX = leftHinge ? -W / 2 + i * dw : -W / 2 + (i + 1) * dw;
+      return (
+        <mesh key={i} position={[hingeX + (leftHinge ? 0.01 : -0.01), h / 2 + (H - h) / 2, D / 2 + dw / 2]} castShadow>
+          <boxGeometry args={[0.02, h, dw]} />
+          <meshStandardMaterial color={shade(color, 0.04)} transparent opacity={0.85} />
+        </mesh>
+      );
+    });
+  }
+  if (opens === 'drawers') {
+    const out = D * 0.75;
+    return (
+      <mesh position={[0, H * 0.82, D / 2 + out / 2 - 0.05]} castShadow>
+        <boxGeometry args={[W * 0.88, Math.min(0.18, H * 0.2), out]} />
+        <meshStandardMaterial color={shade(color, 0.06)} transparent opacity={0.9} />
+      </mesh>
+    );
+  }
+  return null;
+}
+
+/** The space an item needs kept clear, drawn on the floor in local coordinates. */
+function ClearZone({ product, W, D, warn }) {
+  const { front, around } = clearanceOf(product);
+  const color = warn ? '#C0392B' : '#2E6B4E';
+  if (around > 0) {
+    const a = around / 100;
+    return (
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.003, 0]}>
+        <planeGeometry args={[W + 2 * a, D + 2 * a]} />
+        <meshBasicMaterial color={color} transparent opacity={0.14} />
+      </mesh>
+    );
+  }
+  if (front <= 0) return null;
+  const f = front / 100;
+  return (
+    <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.003, D / 2 + f / 2]}>
+      <planeGeometry args={[W, f]} />
+      <meshBasicMaterial color={color} transparent opacity={0.18} />
+    </mesh>
+  );
+}
+
 export function heatColour(t) {
   const a = new THREE.Color('#3E8E5E');
   const b = new THREE.Color('#E3B23C');
@@ -136,9 +192,18 @@ export default function Furniture({ item, heatT }) {
     st.select(uid);
     st.setDragging(true);
   };
+  const overBinAt = (e) => {
+    const ne = e.nativeEvent || e;
+    const el = document.elementFromPoint(ne.clientX, ne.clientY);
+    return !!el?.closest('[data-bin]');
+  };
   const onMove = (e) => {
     if (!drag.current) return;
     e.stopPropagation();
+    const st = useStore.getState();
+    const over = overBinAt(e);
+    st.setOverBin(over);
+    if (over) return;
     const hit = e.ray.intersectPlane(FLOOR, HIT);
     if (!hit) return;
     useStore.getState().moveItem(uid, hit.x * 100 + drag.current.dx, hit.z * 100 + drag.current.dz);
@@ -149,10 +214,19 @@ export default function Furniture({ item, heatT }) {
     e.target.releasePointerCapture(e.pointerId);
     drag.current = null;
     if (controls) controls.enabled = true;
-    useStore.getState().setDragging(false);
+    const st = useStore.getState();
+    const binIt = overBinAt(e);
+    st.setDragging(false);
+    if (binIt) st.bin(uid);
   };
 
   const outline = useMemo(() => new THREE.BoxGeometry(W + 0.04, H + 0.04, D + 0.04), [W, H, D]);
+  const conflicted = useStore((s) => {
+    if (s.selectedUid !== uid) return false;
+    const all = s.placedWithProducts();
+    const me = all.find((a) => a.uid === uid);
+    return me ? clearanceConflicts(me, all).blockedBy.length > 0 : false;
+  });
 
   return (
     <group
@@ -165,6 +239,8 @@ export default function Furniture({ item, heatT }) {
       onPointerOut={() => { document.body.style.cursor = ''; }}
     >
       <Shape category={product.category} W={W} D={D} H={H} color={color} />
+      {selected && view === 'plan' && <ClearZone product={product} W={W} D={D} warn={conflicted} />}
+      {selected && <OpenPreview product={product} W={W} D={D} H={H} color={color} />}
       {(selected || blocked) && (
         <lineSegments position={[0, H / 2, 0]}>
           <edgesGeometry args={[outline]} />

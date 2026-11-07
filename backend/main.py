@@ -102,18 +102,54 @@ def health():
             "n8n_configured": bool(os.environ.get("N8N_NORMALISE_URL"))}
 
 
+def _describe(ip):
+    a, b = (int(x) for x in ip.split(".")[:2])
+    if a == 192 and b == 168 or a == 10:
+        return "home or office network"
+    if a == 172 and 16 <= b <= 31:
+        return "often a virtual adapter (Docker, WSL, VPN). Usually not the one"
+    if a == 100 and 64 <= b <= 127:
+        return "VPN or Tailscale. Only works if the phone is on it too"
+    return "network"
+
+
 @app.get("/api/host")
 def host():
-    """Best guess at this machine's LAN IP, so the desktop can show a QR code the phone can open."""
-    ip = "127.0.0.1"
+    """
+    All IPv4 addresses this machine has, best guess first, so the desktop can
+    build a QR code the phone can open. Laptops often have several (Wi-Fi,
+    Ethernet, Docker, WSL, VPN) and only the Wi-Fi one works for the phone.
+    """
+    guess = None
     try:
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         s.connect(("10.255.255.255", 1))
-        ip = s.getsockname()[0]
+        guess = s.getsockname()[0]
         s.close()
     except OSError:
         pass
-    return {"lan_ip": ip}
+    ips = []
+    try:
+        for info in socket.getaddrinfo(socket.gethostname(), None, socket.AF_INET):
+            ips.append(info[4][0])
+    except OSError:
+        pass
+    if guess:
+        ips.insert(0, guess)
+    seen, out = set(), []
+    for ip in ips:
+        if ip in seen or ip.startswith("127.") or ip.startswith("169.254."):
+            continue
+        seen.add(ip)
+        out.append({"ip": ip, "note": _describe(ip)})
+    # Put typical Wi-Fi ranges first.
+    out.sort(key=lambda c: 0 if c["note"] == "home or office network" else 1)
+    return {"lan_ip": out[0]["ip"] if out else "127.0.0.1", "candidates": out}
+
+
+@app.get("/api/ping")
+def ping():
+    return {"ok": True, "time": time.time()}
 
 
 @app.post("/api/sessions")

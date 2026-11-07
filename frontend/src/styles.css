@@ -264,9 +264,14 @@ input[type='range'] { width: 100%; accent-color: var(--green); }
 .toast {
   position: fixed; bottom: 128px; left: 50%; transform: translateX(-50%);
   z-index: 30; max-width: min(560px, calc(100% - 32px));
+  display: flex; align-items: center; gap: 14px;
   background: var(--ink); color: var(--panel);
   padding: 10px 16px; border-radius: var(--radius-sm); font-size: 14px;
   animation: toast-in 0.18s ease-out;
+}
+.toast-action {
+  background: none; border: 1px solid var(--panel); color: var(--panel);
+  border-radius: var(--radius-sm); padding: 3px 10px; font-weight: 700; cursor: pointer; flex: none;
 }
 @keyframes toast-in { from { opacity: 0; transform: translate(-50%, 6px); } }
 
@@ -310,4 +315,41 @@ input[type='range'] { width: 100%; accent-color: var(--green); }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+
+/* ---------- bin ---------- */
+.bin {
+  height: 96px; width: 72px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
+  background: var(--panel); color: var(--ink-soft);
+  border: 1.5px dashed var(--sage); border-radius: var(--radius-sm);
+  font-weight: 600; font-size: 13px; cursor: pointer;
+}
+.bin:hover { color: var(--red); border-color: var(--red); }
+.bin.ready { color: var(--red); border-color: var(--red); }
+.bin.over { background: var(--red); color: #fff; border-style: solid; transform: scale(1.06); }
+
+/* ---------- heatmap key ---------- */
+.heat-key {
+  position: absolute; top: 56px; left: 16px;
+  width: 220px; padding: 10px 12px; display: grid; gap: 6px;
+  background: rgba(247, 248, 244, 0.94);
+  border: 1px solid var(--line); border-radius: var(--radius-sm);
+}
+.heat-bar { height: 10px; border-radius: 5px; }
+.heat-labels { display: flex; justify-content: space-between; }
+.strong { font-weight: 700; }
+
+/* ---------- clearance notes ---------- */
+.clear-note { color: var(--green); background: var(--green-soft); padding: 6px 8px; border-radius: var(--radius-sm); }
+.warn-note { color: var(--red); background: #F6DEDA; padding: 6px 8px; border-radius: var(--radius-sm); }
+
+.modal h3 { margin-top: 6px; }
+.trouble { font-size: 13px; color: var(--ink-soft); }
+.trouble summary { cursor: pointer; font-weight: 600; color: var(--ink); }
+.trouble ol { margin: 8px 0 0; padding-left: 18px; display: grid; gap: 6px; }
+
+@media (max-width: 860px) {
+  .bin { height: 80px; width: 56px; }
+  .heat-key { top: auto; bottom: 104px; }
 }

@@ -1,5 +1,7 @@
 import { useStore } from '../store.js';
 import { cheaperFits, costPerYear, gbp, netCost, resaleValue } from '../lib/finance.js';
+import { clearanceOf } from '../lib/furniture.js';
+import { clearanceConflicts } from '../lib/geometry.js';
 
 const PRIORITY = { essential: 'Essential', soon: 'Buy soon', later: 'Can wait' };
 
@@ -8,11 +10,19 @@ export default function SelectedCard() {
   const prefs = useStore((s) => s.prefs);
   const products = useStore((s) => s.products);
   const p = useStore((s) => (s.selectedUid ? s.productOf(s.selectedUid) : null));
+  const placed = useStore((s) => s.placed);
   if (!uid || !p) return null;
+
+  const all = useStore.getState().placedWithProducts();
+  const me = all.find((a) => a.uid === uid);
+  const { front, around, why } = clearanceOf(p);
+  const { blockedBy, blocking } = me ? clearanceConflicts(me, all) : { blockedBy: [], blocking: [] };
+  const names = (list) => list.map((o) => o.product.name.toLowerCase()).join(', ');
 
   const months = prefs.tenancyMonths;
   const swaps = cheaperFits(p, products, prefs);
   const { rotate, unplace, swapProduct, select } = useStore.getState();
+  void placed; // re-render when anything moves, so warnings stay current
 
   return (
     <div className="card selected-card" role="dialog" aria-label={p.name}>
@@ -29,9 +39,21 @@ export default function SelectedCard() {
         <div className="total"><dt>Real cost</dt><dd className="num">{gbp(netCost(p, months))}</dd></div>
         <div><dt>Per year of use</dt><dd className="num">{gbp(costPerYear(p))}</dd></div>
       </dl>
+      {(front > 0 || around > 0) && (
+        <p className="clear-note small">
+          {why}. Keeps {around || front} cm clear{around ? ' all round' : ' in front'} (shaded on the floor).
+        </p>
+      )}
+      {blockedBy.length > 0 && (
+        <p className="warn-note small">Blocked by the {names(blockedBy)}. Move one of them so it can be used properly.</p>
+      )}
+      {blocking.length > 0 && (
+        <p className="warn-note small">This is in the way of the {names(blocking)}.</p>
+      )}
       <div className="row">
         <button className="btn small" onClick={() => rotate(uid)}>Rotate <kbd>R</kbd></button>
-        <button className="btn small ghost" onClick={() => unplace(uid)}>Take out of room</button>
+        <button className="btn small ghost" onClick={() => unplace(uid)}>Back to inventory</button>
+        <button className="btn small ghost danger" onClick={() => useStore.getState().bin(uid)}>Bin</button>
       </div>
       {p.url && <a className="link small" href={p.url} target="_blank" rel="noreferrer">View listing</a>}
 

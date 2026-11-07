@@ -45,16 +45,23 @@ export function ManualForm({ sessionId, onDone, compact }) {
 }
 
 export default function RoomSetup({ sessionId, inModal }) {
-  const [base, setBase] = useState(import.meta.env.VITE_PUBLIC_URL || null);
+  const envBase = import.meta.env.VITE_PUBLIC_URL || '';
+  const [base, setBase] = useState(envBase || null);
+  const [candidates, setCandidates] = useState([]);
   const setRoom = useStore((s) => s.setRoom);
   const close = useStore((s) => s.closePanel);
+  const port = window.location.port || '80';
+  const toUrl = (ip) => `http://${ip}:${port}`;
 
   useEffect(() => {
-    if (base) return;
     api.host()
-      .then(({ lan_ip }) => setBase(`${window.location.protocol}//${lan_ip}:${window.location.port || 80}`))
-      .catch(() => setBase(window.location.origin));
-  }, [base]);
+      .then(({ lan_ip, candidates: c }) => {
+        setCandidates(c || []);
+        if (!envBase) setBase(toUrl(lan_ip));
+      })
+      .catch(() => { if (!envBase) setBase(window.location.origin); });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const scanUrl = base ? `${base.replace(/\/$/, '')}/#/scan/${sessionId}` : '';
   const done = (room) => { setRoom(room); close(); };
@@ -81,7 +88,27 @@ export default function RoomSetup({ sessionId, inModal }) {
               <QRCodeSVG value={scanUrl} size={168} bgColor="#F7F8F4" fgColor="#1E2A2B" />
             </div>
           )}
-          <p className="fine">Phone and computer need to be on the same Wi-Fi. Or open <span className="code">{scanUrl}</span></p>
+          <p className="fine">Phone and computer need to be on the same Wi-Fi. Or type this into the phone's browser: <span className="code">{scanUrl}</span></p>
+          {candidates.length > 1 && !envBase && (
+            <label className="field">
+              <span>Wrong address? This computer has several. Pick the Wi-Fi one:</span>
+              <select value={base || ''} onChange={(e) => setBase(e.target.value)}>
+                {candidates.map((c) => (
+                  <option key={c.ip} value={toUrl(c.ip)}>{c.ip} ({c.note})</option>
+                ))}
+              </select>
+            </label>
+          )}
+          <details className="trouble">
+            <summary>Phone can't open the link?</summary>
+            <ol>
+              <li>On the phone, type the address above into the browser yourself. If it never loads, the phone can't reach this computer. It isn't the QR code or the browser.</li>
+              <li>Check the address matches the "Network:" line that <span className="code">npm run dev</span> printed.</li>
+              <li>Allow port {port} through this computer's firewall. On Windows, set the Wi-Fi to a Private network.</li>
+              <li>Event and university Wi-Fi often blocks devices from seeing each other. Connect both to a phone hotspot instead, or use a tunnel (see README).</li>
+              <li>If the browser changes the address to https://, type it again starting with http://.</li>
+            </ol>
+          </details>
           <p className="waiting"><span className="pulse" aria-hidden="true" />Waiting for your phone</p>
         </section>
         <section>

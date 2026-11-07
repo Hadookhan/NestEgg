@@ -3,13 +3,12 @@ import { gbp, netCost } from '../lib/finance.js';
 
 export default function InventoryModal() {
   const inventory = useStore((s) => s.inventory);
-  const productById = useStore((s) => s.productById);
   const placed = useStore((s) => s.placed);
+  const productById = useStore((s) => s.productById);
   const months = useStore((s) => s.prefs.tenancyMonths);
   const room = useStore((s) => s.room);
-  const { closePanel, moveToHotbar, removeFromInventory, arm, unplace, openPanel } = useStore.getState();
-  const placedSet = new Set(placed.map((p) => p.uid));
-  const total = inventory.reduce((s, i) => s + (productById[i.productId]?.price || 0), 0);
+  const { closePanel, moveToHotbar, bin, arm, unplace, openPanel, select } = useStore.getState();
+  const sum = (list) => list.reduce((s, i) => s + (productById[i.productId]?.price || 0), 0);
 
   return (
     <div className="modal-backdrop" onClick={closePanel}>
@@ -18,10 +17,9 @@ export default function InventoryModal() {
           <h2>All items</h2>
           <button className="icon-btn" aria-label="Close" onClick={closePanel}>×</button>
         </div>
-        <p className="muted">
-          {inventory.length} items, {gbp(total)} upfront. The first {HOTBAR_SIZE} sit in your hotbar.
-        </p>
 
+        <h3>Inventory <span className="muted">({inventory.length}, {gbp(sum(inventory))})</span></h3>
+        <p className="muted small">Items waiting to be placed. The first {HOTBAR_SIZE} sit in your hotbar.</p>
         {inventory.length === 0 ? (
           <div className="empty-state">
             <p>Your inventory is empty. Get suggestions from the side panel, or search for something specific.</p>
@@ -32,9 +30,8 @@ export default function InventoryModal() {
             {inventory.map((entry, i) => {
               const p = productById[entry.productId];
               if (!p) return null;
-              const inRoom = placedSet.has(entry.uid);
               return (
-                <li key={entry.uid} className={i < HOTBAR_SIZE ? 'in-hotbar' : ''}>
+                <li key={entry.uid}>
                   <span className="slot-key">{i < HOTBAR_SIZE ? i + 1 : ''}</span>
                   <span className="swatch" style={{ background: p.colour }} />
                   <span className="inv-name">
@@ -44,23 +41,47 @@ export default function InventoryModal() {
                   <span className="num">{gbp(p.price)}</span>
                   <span className="num muted small">real {gbp(netCost(p, months))}</span>
                   <span className="inv-actions">
-                    {inRoom ? (
-                      <button className="btn small ghost" onClick={() => unplace(entry.uid)}>Take out</button>
-                    ) : (
-                      <button className="btn small" disabled={!room}
-                        onClick={() => { arm(entry.uid); closePanel(); }}>
-                        Place
-                      </button>
-                    )}
+                    <button className="btn small" disabled={!room} onClick={() => { arm(entry.uid); closePanel(); }}>
+                      Place
+                    </button>
                     {i >= HOTBAR_SIZE && (
                       <button className="btn small ghost" onClick={() => moveToHotbar(entry.uid)}>To hotbar</button>
                     )}
-                    <button className="btn small ghost danger" onClick={() => removeFromInventory(entry.uid)}>Remove</button>
+                    <button className="btn small ghost danger" onClick={() => bin(entry.uid)}>Bin</button>
                   </span>
                 </li>
               );
             })}
           </ul>
+        )}
+
+        {placed.length > 0 && (
+          <>
+            <h3>In your room <span className="muted">({placed.length}, {gbp(sum(placed))})</span></h3>
+            <ul className="inv-list">
+              {placed.map((entry) => {
+                const p = productById[entry.productId];
+                if (!p) return null;
+                return (
+                  <li key={entry.uid}>
+                    <span className="slot-key" />
+                    <span className="swatch" style={{ background: p.colour }} />
+                    <span className="inv-name">
+                      {p.name}
+                      <span className="muted small"> {p.w} × {p.d} cm</span>
+                    </span>
+                    <span className="num">{gbp(p.price)}</span>
+                    <span className="num muted small">real {gbp(netCost(p, months))}</span>
+                    <span className="inv-actions">
+                      <button className="btn small ghost" onClick={() => { select(entry.uid); closePanel(); }}>Show</button>
+                      <button className="btn small ghost" onClick={() => unplace(entry.uid)}>Back to inventory</button>
+                      <button className="btn small ghost danger" onClick={() => bin(entry.uid)}>Bin</button>
+                    </span>
+                  </li>
+                );
+              })}
+            </ul>
+          </>
         )}
       </div>
     </div>
