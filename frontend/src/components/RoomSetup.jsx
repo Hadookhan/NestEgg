@@ -48,16 +48,21 @@ export default function RoomSetup({ sessionId, inModal }) {
   const envBase = import.meta.env.VITE_PUBLIC_URL || '';
   const [base, setBase] = useState(envBase || null);
   const [candidates, setCandidates] = useState([]);
+  const [wslNat, setWslNat] = useState(false);
   const setRoom = useStore((s) => s.setRoom);
   const close = useStore((s) => s.closePanel);
   const port = window.location.port || '80';
   const toUrl = (ip) => `http://${ip}:${port}`;
 
   useEffect(() => {
-    api.host()
-      .then(({ lan_ip, candidates: c }) => {
+    // Ask the dev server (where the phone connects) for its addresses; fall back to the backend.
+    fetch('/__nestegg/host')
+      .then((r) => (r.ok ? r.json() : Promise.reject()))
+      .catch(() => api.host())
+      .then(({ lan_ip, candidates: c, wslNat: w }) => {
         setCandidates(c || []);
-        if (!envBase) setBase(toUrl(lan_ip));
+        setWslNat(!!w);
+        if (!envBase) setBase(lan_ip ? toUrl(lan_ip) : null);
       })
       .catch(() => { if (!envBase) setBase(window.location.origin); });
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -83,7 +88,13 @@ export default function RoomSetup({ sessionId, inModal }) {
         <section className="setup-scan">
           <h2>Scan with your phone</h2>
           <p>Scan this code with your phone camera. Stand in the middle of the room and take a 360° photo, and it will appear here.</p>
-          {scanUrl && (
+          {wslNat && !envBase && (
+            <div className="warn-note small">
+              <p><strong>The planner is running inside WSL, which phones can't reach.</strong></p>
+              <p>Easiest fix: stop <span className="code">npm run dev</span> here and run it from Windows PowerShell instead (the backend can stay in WSL). Or turn on WSL mirrored networking. Run <span className="code">npm run doctor</span> for step-by-step instructions.</p>
+            </div>
+          )}
+          {scanUrl && !(wslNat && !envBase) && (
             <div className="qr">
               <QRCodeSVG value={scanUrl} size={168} bgColor="#F7F8F4" fgColor="#1E2A2B" />
             </div>
@@ -101,7 +112,7 @@ export default function RoomSetup({ sessionId, inModal }) {
               <span>Wrong address? This computer has several. Pick the Wi-Fi one:</span>
               <select value={base || ''} onChange={(e) => setBase(e.target.value)}>
                 {candidates.map((c) => (
-                  <option key={c.ip} value={toUrl(c.ip)}>{c.ip} ({c.note})</option>
+                  <option key={c.ip} value={toUrl(c.ip)}>{c.ip} ({c.kind || c.note})</option>
                 ))}
               </select>
             </label>

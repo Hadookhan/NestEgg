@@ -4,7 +4,8 @@ import { api } from '../lib/api.js';
 import RoomScene from './RoomScene.jsx';
 import SidePanel from './SidePanel.jsx';
 import Hotbar from './Hotbar.jsx';
-import SelectedCard from './SelectedCard.jsx';
+import SelectionBar from './SelectionBar.jsx';
+import ItemInfo from './ItemInfo.jsx';
 import InventoryModal from './InventoryModal.jsx';
 import FindItemModal from './FindItemModal.jsx';
 import CashflowModal from './CashflowModal.jsx';
@@ -83,7 +84,9 @@ function useShortcuts() {
       if (key === 'e') {
         s.panel === 'inventory' ? s.closePanel() : s.openPanel('inventory');
       } else if (key === 'escape') {
-        if (s.panel) s.closePanel();
+        if (s.view === 'stand') s.setView('plan');
+        else if (s.infoUid) s.closeInfo();
+        else if (s.panel) s.closePanel();
         else s.select(null);
         useStore.setState({ armedUid: null });
       } else if (/^[1-9]$/.test(key)) {
@@ -93,6 +96,8 @@ function useShortcuts() {
         e.preventDefault();
         const step = (key === 'pageup' || key === 'pagedown' ? 20 : 5) * (key.includes('up') ? 1 : -1);
         s.nudgeHeight(s.selectedUid, step);
+      } else if (key === 'i' && s.selectedUid) {
+        s.toggleInfo(s.selectedUid, null);
       } else if (key === 'r' && s.selectedUid) {
         s.rotate(s.selectedUid);
       } else if ((key === 'delete' || key === 'backspace') && s.selectedUid) {
@@ -153,7 +158,12 @@ export default function Editor({ sessionId }) {
           </div>
         )}
         <div className="topbar-actions">
-          {room && (
+          {room && view === 'stand' && (
+            <button className={`btn ghost ${gyro ? 'on' : ''}`} aria-pressed={gyro} onClick={enableGyro}>
+              {gyro ? 'Stop phone motion' : 'Use phone motion'}
+            </button>
+          )}
+          {room && view === 'plan' && (
             <>
               <button className={`btn ghost ${heatmap ? 'on' : ''}`} aria-pressed={heatmap}
                 onClick={() => useStore.getState().toggleHeatmap()}>
@@ -191,24 +201,18 @@ export default function Editor({ sessionId }) {
         {loaded && !room && <RoomSetup sessionId={sessionId} />}
         {room && <RoomScene bridgeRef={bridgeRef} />}
 
+        {/* First-person view shows only the room: no overlays at all. */}
         {room && view === 'plan' && (
           <p className="stage-hint">
             {armedUid
               ? 'Click the floor to place it. Esc to cancel.'
-              : 'Drag items to move, or onto the bin to bin them. R rotates, ↑ ↓ raise wall items, Delete puts it back in your inventory. Each tile is 50 cm.'}
+              : 'Drag to move, or onto the bin. R rotates, ↑ ↓ raise wall items, I shows details. Each tile is 50 cm.'}
           </p>
         )}
-        {room && view === 'stand' && (
-          <div className="stage-hint stand">
-            Drag to look around.
-            <button className="link" onClick={enableGyro}>
-              {gyro ? 'Stop using motion' : 'Use phone motion'}
-            </button>
-          </div>
-        )}
-        {room && heatmap && <HeatmapKey />}
-        {room && view === 'plan' && <SelectedCard />}
-        <Hotbar />
+        {room && view === 'plan' && heatmap && <HeatmapKey />}
+        {room && view === 'plan' && <SelectionBar />}
+        {view === 'plan' && <ItemInfo />}
+        {view === 'plan' && <Hotbar />}
       </main>
 
       {panel === 'inventory' && <InventoryModal />}
@@ -222,7 +226,7 @@ export default function Editor({ sessionId }) {
           </div>
         </div>
       )}
-      <Toast />
+      {view === 'plan' && <Toast />}
     </div>
   );
 }

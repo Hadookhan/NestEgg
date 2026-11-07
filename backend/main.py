@@ -121,6 +121,23 @@ def _describe(ip):
     return "network"
 
 
+def _in_wsl():
+    try:
+        return "microsoft" in Path("/proc/version").read_text().lower()
+    except OSError:
+        return False
+
+
+def _wsl_mirrored():
+    """Mirrored networking shares Windows' real addresses, so phones can reach WSL directly."""
+    cfg = None
+    for users in Path("/mnt/c/Users").glob("*/.wslconfig") if Path("/mnt/c/Users").exists() else []:
+        cfg = users.read_text(errors="ignore").lower()
+        if "networkingmode" in cfg:
+            return "mirrored" in cfg.split("networkingmode", 1)[1].splitlines()[0]
+    return False
+
+
 @app.get("/api/host")
 def host():
     """
@@ -153,7 +170,11 @@ def host():
     # Put hotspots and typical Wi-Fi ranges first, virtual adapters last.
     rank = lambda c: 0 if "hotspot" in c["note"] else 1 if c["note"] == "Wi-Fi or hotspot" else 3 if "Not the one" in c["note"] else 2
     out.sort(key=rank)
-    return {"lan_ip": out[0]["ip"] if out else "127.0.0.1", "candidates": out}
+    wsl = _in_wsl() and not _wsl_mirrored()
+    if wsl:
+        for c in out:
+            c["note"] = "WSL internal address. Phones can't reach it"
+    return {"lan_ip": out[0]["ip"] if out else "127.0.0.1", "candidates": out, "wsl": wsl}
 
 
 @app.get("/api/ping")

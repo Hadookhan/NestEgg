@@ -18,6 +18,8 @@ export const useStore = create((set, get) => ({
   placed: [], // items in the room: [{ uid, productId, x, z, rot, y }] (y = cm off the floor)
   binned: null, // last binned item, for undo
   selectedUid: null,
+  infoUid: null, // item whose details popup is open
+  infoAnchorX: null, // x position (px, within the 3D area) of the 'i' button that opened it
   armedUid: null, // hotbar item waiting for a click on the floor
   blockedUid: null, // flashes red when a move is refused
   dragging: false,
@@ -108,7 +110,18 @@ export const useStore = create((set, get) => ({
   },
   setCustom: (custom) => set({ prefs: { ...get().prefs, custom } }),
   setMoney: (key, value) => set({ money: { ...get().money, [key]: value } }),
-  setView: (view) => set({ view, selectedUid: view === 'stand' ? null : get().selectedUid, armedUid: null }),
+  setView: (view) => set({
+    view,
+    selectedUid: view === 'stand' ? null : get().selectedUid,
+    infoUid: view === 'stand' ? null : get().infoUid,
+    armedUid: null,
+  }),
+  toggleInfo: (uid, anchorX = null) => set(
+    get().infoUid === uid && get().infoAnchorX === anchorX
+      ? { infoUid: null }
+      : { infoUid: uid, infoAnchorX: anchorX },
+  ),
+  closeInfo: () => set({ infoUid: null }),
   toggleHeatmap: () => set({ heatmap: !get().heatmap }),
   setGyro: (gyro) => set({ gyro }),
   openPanel: (panel) => set({ panel }),
@@ -143,6 +156,7 @@ export const useStore = create((set, get) => ({
       placed: placed.filter((x) => x.uid !== uid),
       selectedUid: get().selectedUid === uid ? null : get().selectedUid,
       armedUid: get().armedUid === uid ? null : get().armedUid,
+      infoUid: get().infoUid === uid ? null : get().infoUid,
       overBin: false,
     });
     get().notify(`Binned ${p?.name ?? 'item'}`, { label: 'Undo', run: () => get().undoBin() });

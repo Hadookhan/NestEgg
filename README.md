@@ -150,6 +150,8 @@ Then put the https address in `frontend/.env` as `VITE_PUBLIC_URL` and restart `
 | Place an item | Drag it from the hotbar onto the floor, or press 1–9 (or click a slot) and then click the floor. Placed items leave the inventory |
 | Move | Drag it in Plan view. It snaps to 10 cm and won't pass through walls, other furniture or the door's keep-clear zone (amber) |
 | Rotate | Select it, then R |
+| Details | The **i** on a hotbar slot, or select an item in the room and press **i** (or the I key) |
+| First-person view | Stand in room hides everything on the 3D screen. Esc or Plan view to go back |
 | Back to inventory | Select it, then Delete |
 | Bin | Drag a hotbar slot or a room item onto the bin, or select an item and click the bin. Undo appears for a few seconds |
 | Clear the room | Clear room (top bar or side panel) moves every item back to your inventory. Undo appears for a few seconds |
@@ -215,6 +217,18 @@ All estimates are simple and labelled as such. The formulas are in `frontend/src
 - **"Not enough space to turn it here"**: drag the item somewhere clearer, then rotate.
 
 ## If the QR code doesn't work
+
+### Running in WSL?
+
+If `npm run dev` shows **Network** addresses like `172.x.x.x` and `10.255.255.254`, it's running inside WSL. WSL has its own private network behind Windows, so phones can't reach those addresses, and the address the phone needs (Windows' Wi-Fi or hotspot address) isn't listed at all. Pick one fix:
+
+- **Easiest: run the frontend on Windows.** Copy the `frontend` folder to a Windows drive (e.g. `C:\nestegg\frontend`), then in PowerShell there run `npm install` and `npm run dev`. The backend can stay in WSL, because Windows forwards `localhost:8000` into WSL automatically. The Network line will now show the right address.
+- **Windows 11: WSL mirrored networking.** Create `C:\Users\<you>\.wslconfig` containing `[wsl2]` and `networkingMode=mirrored` on two lines. Then, in PowerShell as administrator, run `wsl --shutdown` and `Set-NetFirewallHyperVVMSetting -Name '{40E0AC32-46A5-438A-A0B2-2B479E8F2E90}' -DefaultInboundAction Allow`. Reopen WSL and start the servers again.
+- **Windows 10: port forwarding.** `npm run doctor` prints the exact `netsh interface portproxy` command with your WSL address filled in. Redo it whenever WSL restarts, since its address changes.
+
+After any of these, the Windows firewall steps below still apply.
+
+### Everything else
 
 Start by running the connection check on the laptop, with the planner and backend running:
 

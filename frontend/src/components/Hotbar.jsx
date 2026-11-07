@@ -43,6 +43,7 @@ export default function Hotbar() {
   const inventory = useStore((s) => s.inventory);
   const productById = useStore((s) => s.productById);
   const armedUid = useStore((s) => s.armedUid);
+  const infoUid = useStore((s) => s.infoUid);
   const room = useStore((s) => s.room);
   const slots = Array.from({ length: HOTBAR_SIZE }, (_, i) => inventory[i] || null);
 
@@ -61,21 +62,41 @@ export default function Hotbar() {
           if (!p) return null;
           return (
             <li key={entry.uid}>
-              <button
-                className={`slot ${armedUid === entry.uid ? 'armed' : ''}`}
+              <div
+                role="button"
+                tabIndex={0}
+                className={`slot ${armedUid === entry.uid ? 'armed' : ''} ${infoUid === entry.uid ? 'info-open' : ''}`}
                 draggable
                 onDragStart={(e) => {
                   e.dataTransfer.setData('text/nestegg-uid', entry.uid);
                   e.dataTransfer.effectAllowed = 'move';
                 }}
                 onClick={() => room && useStore.getState().arm(entry.uid)}
-                title={`${p.name}: ${gbp(p.price)}. Drag into the room, or click then click the floor.`}
+                onKeyDown={(e) => {
+                  if ((e.key === 'Enter' || e.key === ' ') && room) { e.preventDefault(); useStore.getState().arm(entry.uid); }
+                }}
+                aria-label={`${p.name}, ${gbp(p.price)}. Press to place.`}
               >
                 <span className="slot-key">{i + 1}</span>
                 <span className="swatch" style={{ background: p.colour }} />
+                <button
+                  className={`info-btn slot-info ${infoUid === entry.uid ? 'on' : ''}`}
+                  data-info-button
+                  draggable={false}
+                  aria-label={`Details for ${p.name}`}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    const stage = e.currentTarget.closest('.stage');
+                    const r = e.currentTarget.getBoundingClientRect();
+                    const sr = stage ? stage.getBoundingClientRect() : { left: 0 };
+                    useStore.getState().toggleInfo(entry.uid, Math.round(r.left + r.width / 2 - sr.left));
+                  }}
+                >
+                  i
+                </button>
                 <span className="slot-name">{p.name}</span>
                 <span className="slot-price num">{gbp(p.price)}</span>
-              </button>
+              </div>
             </li>
           );
         })}
