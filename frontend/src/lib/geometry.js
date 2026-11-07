@@ -2,8 +2,10 @@
 // Room: x runs 0..width (west to east), z runs 0..depth (north to south).
 // A placed item is { uid, x, z, rot } where x/z is the footprint centre and
 // rot (0-3) says which wall the item's back faces: 0 north, 1 west, 2 south, 3 east.
+// y is the height of the item's underside off the floor (0 for floor furniture;
+// wall-mounted items like TVs and pictures can be raised and lowered).
 
-import { arePartners, clearanceOf, ruleOf } from './furniture.js';
+import { ABOVE_FLOOR_SPACE, arePartners, clearanceOf, defaultHeight, isMounted, ruleOf } from './furniture.js';
 
 export const GRID = 50; // visible tiles
 export const SNAP = 10; // drag snapping
@@ -50,12 +52,53 @@ export function rectsOf(placedWithProducts, exceptUid) {
     .map((pl) => ({ ...pl, rect: rectAt(pl.product, pl.x, pl.z, pl.rot) }));
 }
 
-export function canPlace(p, x, z, rot, room, others) {
+const DOOR_HEIGHT = 210;
+const yOf = (o) => o.y || 0;
+
+/** Two height ranges overlap (touching is fine: a TV can rest on a stand). */
+const verticalOverlap = (y1, h1, y2, h2) => y1 < y2 + h2 - EPS && y2 < y1 + h1 - EPS;
+
+function flushToWall(r, rot, room) {
+  if (rot === 0) return Math.abs(r.z1) < 1;
+  if (rot === 1) return Math.abs(r.x1) < 1;
+  if (rot === 2) return Math.abs(r.z2 - room.depth) < 1;
+  return Math.abs(r.x2 - room.width) < 1;
+}
+
+const WALL_OF_ROT = ['north', 'west', 'south', 'east'];
+
+/** A wall item can't hang across the door opening. */
+function inDoorway(r, rot, y, room) {
+  const d = room.door;
+  if (!d || WALL_OF_ROT[rot] !== d.wall || y >= DOOR_HEIGHT) return false;
+  const half = (d.width || 80) / 2;
+  const [a1, a2] = rot % 2 === 0 ? [r.x1, r.x2] : [r.z1, r.z2];
+  return a1 < d.offset + half && a2 > d.offset - half;
+}
+
+export function canPlace(p, x, z, rot, room, others, y = 0) {
   const r = rectAt(p, x, z, rot);
   if (!inside(r, room)) return false;
-  const dr = doorRect(room);
-  if (dr && overlaps(r, dr)) return false;
-  return !others.some((o) => overlaps(r, o.rect));
+  if (y < -EPS || y + p.h > (room.height || 240) + EPS) return false;
+  if (isMounted(p)) {
+    if (!flushToWall(r, rot, room) || inDoorway(r, rot, y, room)) return false;
+  } else {
+    const dr = doorRect(room);
+    if (dr && overlaps(r, dr)) return false;
+  }
+  return !others.some((o) => overlaps(r, o.rect) && verticalOverlap(y, p.h, yOf(o), o.product.h));
+}
+
+/** Snap a wall item to the wall nearest (x, z), facing into the room. */
+export function wallSnap(p, x, z, room) {
+  const d = [z, x, room.depth - z, room.width - x]; // distance to north, west, south, east
+  const rot = d.indexOf(Math.min(...d));
+  const f = footprint(p, rot);
+  const along = (v, len, half) => Math.min(Math.max(snap(v), half), len - half);
+  if (rot === 0) return { x: along(x, room.width, f.w / 2), z: f.d / 2, rot };
+  if (rot === 2) return { x: along(x, room.width, f.w / 2), z: room.depth - f.d / 2, rot };
+  if (rot === 1) return { x: f.w / 2, z: along(z, room.depth, f.d / 2), rot };
+  return { x: room.width - f.w / 2, z: along(z, room.depth, f.d / 2), rot };
 }
 
 export function clampCentre(p, x, z, rot, room) {
@@ -72,14 +115,21 @@ export function fitsRoom(p, room) {
 }
 
 /** Search outward from (x, z) for the nearest valid spot. */
-export function findNearestFree(p, x, z, room, others, rots = [0, 1, 2, 3], maxR = 150) {
+export function findNearestFree(p, x, z, room, others, rots = [0, 1, 2, 3], maxR = 150, y = null) {
+  if (isMounted(p)) {
+    const h = y ?? defaultHeight(p);
+    const cands = wallCandidates(p, room, 'corner')
+      .sort((a, b) => Math.hypot(a.x - x, a.z - z) - Math.hypot(b.x - x, b.z - z));
+    for (const c of cands) if (canPlace(p, c.x, c.z, c.rot, room, others, h)) return { ...c, y: h };
+    return null;
+  }
   for (let r = 0; r <= maxR; r += SNAP) {
     for (let dx = -r; dx <= r; dx += SNAP) {
       for (let dz = -r; dz <= r; dz += SNAP) {
         if (Math.max(Math.abs(dx), Math.abs(dz)) !== r) continue;
         for (const rot of rots) {
           const c = clampCentre(p, snap(x + dx), snap(z + dz), rot, room);
-          if (canPlace(p, c.x, c.z, rot, room, others)) return { x: c.x, z: c.z, rot };
+          if (canPlace(p, c.x, c.z, rot, room, others)) return { x: c.x, z: c.z, rot, y: 0 };
         }
       }
     }
@@ -123,31 +173,36 @@ export function clearanceConflicts(item, all) {
   const myRect = rectAt(item.product, item.x, item.z, item.rot);
   const blockedBy = [];
   const blocking = [];
+  const meHigh = yOf(item) >= ABOVE_FLOOR_SPACE;
   for (const o of all) {
     if (o.uid === item.uid || arePartners(item.product, o.product)) continue;
     const oRect = rectAt(o.product, o.x, o.z, o.rot);
-    if (mine.some((zr) => overlaps(zr, oRect))) blockedBy.push(o);
-    if (zonesOf(o.product, o.x, o.z, o.rot).some((zr) => overlaps(zr, myRect))) blocking.push(o);
+    if (yOf(o) < ABOVE_FLOOR_SPACE && mine.some((zr) => overlaps(zr, oRect))) blockedBy.push(o);
+    if (!meHigh && zonesOf(o.product, o.x, o.z, o.rot).some((zr) => overlaps(zr, myRect))) blocking.push(o);
   }
   return { blockedBy, blocking };
 }
 
 /** Valid spot that also respects everyone's clear space (unless relaxed). */
 function fits(p, c, room, others, relaxed) {
-  if (!canPlace(p, c.x, c.z, c.rot, room, others)) return false;
+  const y = c.y || 0;
+  if (!canPlace(p, c.x, c.z, c.rot, room, others, y)) return false;
   if (relaxed) return true;
   const r = rectAt(p, c.x, c.z, c.rot);
   const mine = zonesOf(p, c.x, c.z, c.rot);
+  const high = y >= ABOVE_FLOOR_SPACE;
   for (const o of others) {
     if (arePartners(p, o.product)) continue;
-    if (mine.some((zr) => overlaps(zr, o.rect))) return false;
-    if (o.zones.some((zr) => overlaps(zr, r))) return false;
+    if (yOf(o) < ABOVE_FLOOR_SPACE && mine.some((zr) => overlaps(zr, o.rect))) return false;
+    if (!high && o.zones.some((zr) => overlaps(zr, r))) return false;
   }
   return true;
 }
 
 function firstFit(p, cands, room, others, relaxed = false) {
-  for (const c of cands) {
+  const baseY = defaultHeight(p);
+  for (const c0 of cands) {
+    const c = { ...c0, y: c0.y ?? baseY };
     const cc = { ...c, ...clampCentre(p, c.x, c.z, c.rot, room) };
     if (Math.abs(cc.x - c.x) > 1 || Math.abs(cc.z - c.z) > 1) continue; // would have to move off the intended spot
     if (fits(p, cc, room, others, relaxed)) return cc;
@@ -187,10 +242,10 @@ function wallCandidates(p, room, align = 'corner') {
   return out;
 }
 
-function nearCandidates(p, t, how, room) {
+function nearCandidates(p, t, how, room, aboveGap = 20) {
   const tf = footprint(t.product, t.rot);
   const r = t.rect;
-  const gap = 5;
+  const gap = how === 'above' ? aboveGap : 5;
   if (how === 'beside') {
     const k = t.rot;
     const f = footprint(p, k);
@@ -199,6 +254,16 @@ function nearCandidates(p, t, how, room) {
     if (k === 2) return [{ x: r.x2 + gap + f.w / 2, z: r.z2 - f.d / 2, rot: k }, { x: r.x1 - gap - f.w / 2, z: r.z2 - f.d / 2, rot: k }];
     if (k === 1) return [{ x: r.x1 + f.w / 2, z: r.z2 + gap + f.d / 2, rot: k }, { x: r.x1 + f.w / 2, z: r.z1 - gap - f.d / 2, rot: k }];
     return [{ x: r.x2 - f.w / 2, z: r.z2 + gap + f.d / 2, rot: k }, { x: r.x2 - f.w / 2, z: r.z1 - gap - f.d / 2, rot: k }];
+  }
+  if (how === 'above') {
+    // Same wall as the target, centred on it, `gap` cm above its top.
+    const k = t.rot;
+    const f = footprint(p, k);
+    const y = Math.max(defaultHeight(p), yOf(t) + t.product.h + gap);
+    if (k === 0) return [{ x: t.x, z: f.d / 2, rot: k, y }];
+    if (k === 2) return [{ x: t.x, z: room.depth - f.d / 2, rot: k, y }];
+    if (k === 1) return [{ x: f.w / 2, z: t.z, rot: k, y }];
+    return [{ x: room.width - f.w / 2, z: t.z, rot: k, y }];
   }
   if (how === 'front') {
     const [dx, dz] = frontDir(t.rot);
@@ -253,23 +318,28 @@ const orderOf = (cat) => {
 };
 
 function placeOne(p, result, room, onlyRot = null) {
-  const rule = ruleOf(p);
+  const base = ruleOf(p);
+  const rule = isMounted(p) && base.place !== 'mount' ? { ...base, place: 'mount' } : base;
   const others = result.map((o) => ({ ...o, rect: rectAt(o.product, o.x, o.z, o.rot), zones: zonesOf(o.product, o.x, o.z, o.rot) }));
+  // A mount that can't go at its usual height is tried a little higher and lower before giving up.
+  const heights = rule.place === 'mount' ? [0, 20, -20, 40] : [0];
 
   for (const pass of [false, true]) { // strict first, then ignore clear space if the room is tight
     for (const n of rule.near || []) {
       for (const t of others.filter((o) => n.to.includes(o.product.category))) {
-        let nc = nearCandidates(p, t, n.how, room);
+        let nc = nearCandidates(p, t, n.how, room, n.gap);
         if (onlyRot !== null) nc = nc.filter((c) => c.rot === onlyRot);
         const c = firstFit(p, nc, room, others, pass);
         if (c) return { ...c, relaxed: pass };
       }
     }
     let cands;
-    if (rule.place === 'wall') cands = wallCandidates(p, room, rule.align);
+    if (rule.place === 'mount') cands = wallCandidates(p, room, rule.align || 'centre');
+    else if (rule.place === 'wall') cands = wallCandidates(p, room, rule.align);
     else if (rule.place === 'centre') cands = spiral(p, room, [0, 1]);
     else cands = [...wallCandidates(p, room, 'corner'), ...spiral(p, room, [0, 1, 2, 3])];
     if (onlyRot !== null) cands = cands.filter((c) => c.rot === onlyRot);
+    if (heights.length > 1) cands = heights.flatMap((dh) => cands.map((c) => ({ ...c, y: defaultHeight(p) + dh })));
     const c = firstFit(p, cands, room, others, pass);
     if (c) return { ...c, relaxed: pass };
   }
@@ -286,7 +356,7 @@ function greedy(order, placed, room, anchorRot) {
       ? placeOne(item.product, result, room, i === 0 ? anchorRot : null)
       : null;
     if (pos) {
-      const pl = { ...item, x: pos.x, z: pos.z, rot: pos.rot };
+      const pl = { ...item, x: pos.x, z: pos.z, rot: pos.rot, y: pos.y || 0 };
       result.push(pl);
       added.push(pl);
       if (pos.relaxed) squeezed++;

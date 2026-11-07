@@ -25,7 +25,7 @@ function ProductRow({ p, months, onAdd }) {
 function Search() {
   const prefs = useStore((s) => s.prefs);
   const [q, setQ] = useState('');
-  const [roomFilter, setRoomFilter] = useState(prefs.roomType);
+  const [roomFilter, setRoomFilter] = useState(prefs.roomType === 'custom' ? '' : prefs.roomType);
   const [results, setResults] = useState([]);
   const [error, setError] = useState(null);
 
@@ -45,7 +45,7 @@ function Search() {
           onChange={(e) => setQ(e.target.value)} aria-label="Search items" />
         <select value={roomFilter} onChange={(e) => setRoomFilter(e.target.value)} aria-label="Room type">
           <option value="">All rooms</option>
-          {ROOM_TYPES.map((r) => <option key={r.key} value={r.key}>{r.label}</option>)}
+          {ROOM_TYPES.filter((r) => r.key !== 'custom').map((r) => <option key={r.key} value={r.key}>{r.label}</option>)}
         </select>
       </div>
       {error && <p className="error">{error}</p>}

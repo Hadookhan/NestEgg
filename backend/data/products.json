@@ -1256,5 +1256,332 @@
   "condition": "new",
   "url": null,
   "source": "Sample data (illustrative prices)"
+ },
+ {
+  "id": "tv-43",
+  "name": "43-inch TV with wall bracket",
+  "category": "tv",
+  "rooms": [
+   "living_room",
+   "bedroom"
+  ],
+  "price": 279,
+  "currency": "GBP",
+  "w": 97,
+  "d": 8,
+  "h": 57,
+  "colour": "#1B1B1B",
+  "colourName": "black",
+  "tone": "dark",
+  "styles": [
+   "minimal",
+   "industrial"
+  ],
+  "priority": "soon",
+  "lifespanYears": 7,
+  "resaleRate": 0.35,
+  "condition": "new",
+  "url": null,
+  "source": "Sample data (illustrative prices)",
+  "mount": "wall",
+  "defaultY": 70
+ },
+ {
+  "id": "tv-55",
+  "name": "55-inch TV with wall bracket",
+  "category": "tv",
+  "rooms": [
+   "living_room"
+  ],
+  "price": 429,
+  "currency": "GBP",
+  "w": 123,
+  "d": 8,
+  "h": 72,
+  "colour": "#1B1B1B",
+  "colourName": "black",
+  "tone": "dark",
+  "styles": [
+   "minimal",
+   "industrial",
+   "bold"
+  ],
+  "priority": "soon",
+  "lifespanYears": 7,
+  "resaleRate": 0.35,
+  "condition": "new",
+  "url": null,
+  "source": "Sample data (illustrative prices)",
+  "mount": "wall",
+  "defaultY": 70
+ },
+ {
+  "id": "tv-43-used",
+  "name": "43-inch TV with wall bracket (second-hand)",
+  "category": "tv",
+  "rooms": [
+   "living_room",
+   "bedroom"
+  ],
+  "price": 140,
+  "currency": "GBP",
+  "w": 97,
+  "d": 8,
+  "h": 57,
+  "colour": "#1B1B1B",
+  "colourName": "black",
+  "tone": "dark",
+  "styles": [
+   "minimal",
+   "industrial"
+  ],
+  "priority": "soon",
+  "lifespanYears": 5,
+  "resaleRate": 0.6,
+  "condition": "used",
+  "url": null,
+  "source": "Sample data (illustrative prices)",
+  "mount": "wall",
+  "defaultY": 70
+ },
+ {
+  "id": "art-botanical",
+  "name": "Framed botanical print",
+  "category": "wall_art",
+  "rooms": [
+   "bedroom",
+   "living_room",
+   "dining",
+   "home_office"
+  ],
+  "price": 25,
+  "currency": "GBP",
+  "w": 50,
+  "d": 3,
+  "h": 70,
+  "colour": "#7FA37A",
+  "colourName": "sage green",
+  "tone": "colour",
+  "styles": [
+   "scandi",
+   "cosy"
+  ],
+  "priority": "later",
+  "lifespanYears": 10,
+  "resaleRate": 0.2,
+  "condition": "new",
+  "url": null,
+  "source": "Sample data (illustrative prices)",
+  "mount": "wall",
+  "defaultY": 110
+ },
+ {
+  "id": "art-abstract",
+  "name": "Large abstract canvas",
+  "category": "wall_art",
+  "rooms": [
+   "living_room",
+   "bedroom",
+   "dining"
+  ],
+  "price": 45,
+  "currency": "GBP",
+  "w": 100,
+  "d": 4,
+  "h": 70,
+  "colour": "#D9714E",
+  "colourName": "burnt orange",
+  "tone": "colour",
+  "styles": [
+   "bold"
+  ],
+  "priority": "later",
+  "lifespanYears": 10,
+  "resaleRate": 0.2,
+  "condition": "new",
+  "url": null,
+  "source": "Sample data (illustrative prices)",
+  "mount": "wall",
+  "defaultY": 110
+ },
+ {
+  "id": "art-mono",
+  "name": "Black-and-white photo print",
+  "category": "wall_art",
+  "rooms": [
+   "living_room",
+   "bedroom",
+   "home_office",
+   "dining"
+  ],
+  "price": 19,
+  "currency": "GBP",
+  "w": 40,
+  "d": 3,
+  "h": 50,
+  "colour": "#3A3A3A",
+  "colourName": "black",
+  "tone": "dark",
+  "styles": [
+   "minimal",
+   "industrial"
+  ],
+  "priority": "later",
+  "lifespanYears": 10,
+  "resaleRate": 0.2,
+  "condition": "new",
+  "url": null,
+  "source": "Sample data (illustrative prices)",
+  "mount": "wall",
+  "defaultY": 120
+ },
+ {
+  "id": "shelf-floating-oak",
+  "name": "Oak floating shelf",
+  "category": "wall_shelf",
+  "rooms": [
+   "home_office",
+   "living_room",
+   "bedroom",
+   "bathroom"
+  ],
+  "price": 18,
+  "currency": "GBP",
+  "w": 80,
+  "d": 20,
+  "h": 4,
+  "colour": "#C49A6C",
+  "colourName": "oak",
+  "tone": "wood",
+  "styles": [
+   "scandi",
+   "cosy"
+  ],
+  "priority": "later",
+  "lifespanYears": 10,
+  "resaleRate": 0.25,
+  "condition": "new",
+  "url": null,
+  "source": "Sample data (illustrative prices)",
+  "mount": "wall",
+  "defaultY": 130
+ },
+ {
+  "id": "shelf-floating-black",
+  "name": "Black metal wall shelf",
+  "category": "wall_shelf",
+  "rooms": [
+   "home_office",
+   "living_room",
+   "bedroom"
+  ],
+  "price": 22,
+  "currency": "GBP",
+  "w": 60,
+  "d": 20,
+  "h": 20,
+  "colour": "#2B2B2B",
+  "colourName": "black",
+  "tone": "dark",
+  "styles": [
+   "industrial"
+  ],
+  "priority": "later",
+  "lifespanYears": 10,
+  "resaleRate": 0.25,
+  "condition": "new",
+  "url": null,
+  "source": "Sample data (illustrative prices)",
+  "mount": "wall",
+  "defaultY": 130
+ },
+ {
+  "id": "mirror-round-wall",
+  "name": "Round wall mirror",
+  "category": "wall_mirror",
+  "rooms": [
+   "bedroom",
+   "bathroom",
+   "living_room"
+  ],
+  "price": 35,
+  "currency": "GBP",
+  "w": 60,
+  "d": 4,
+  "h": 60,
+  "colour": "#C8A44A",
+  "colourName": "brass",
+  "tone": "colour",
+  "styles": [
+   "bold",
+   "cosy",
+   "scandi"
+  ],
+  "priority": "later",
+  "lifespanYears": 10,
+  "resaleRate": 0.35,
+  "condition": "new",
+  "url": null,
+  "source": "Sample data (illustrative prices)",
+  "mount": "wall",
+  "defaultY": 115
+ },
+ {
+  "id": "bath-mirror-cabinet",
+  "name": "Mirrored bathroom wall cabinet",
+  "category": "bath_wall_cabinet",
+  "rooms": [
+   "bathroom"
+  ],
+  "price": 45,
+  "currency": "GBP",
+  "w": 50,
+  "d": 15,
+  "h": 60,
+  "colour": "#F2F2EF",
+  "colourName": "white",
+  "tone": "light",
+  "styles": [
+   "minimal",
+   "scandi"
+  ],
+  "priority": "soon",
+  "lifespanYears": 6,
+  "resaleRate": 0.2,
+  "condition": "new",
+  "url": null,
+  "source": "Sample data (illustrative prices)",
+  "mount": "wall",
+  "defaultY": 120
+ },
+ {
+  "id": "coat-hooks",
+  "name": "Wall coat rack with five hooks",
+  "category": "coat_hooks",
+  "rooms": [
+   "living_room",
+   "bedroom"
+  ],
+  "price": 15,
+  "currency": "GBP",
+  "w": 60,
+  "d": 10,
+  "h": 15,
+  "colour": "#C49A6C",
+  "colourName": "oak",
+  "tone": "wood",
+  "styles": [
+   "scandi",
+   "cosy",
+   "minimal"
+  ],
+  "priority": "soon",
+  "lifespanYears": 10,
+  "resaleRate": 0.2,
+  "condition": "new",
+  "url": null,
+  "source": "Sample data (illustrative prices)",
+  "mount": "wall",
+  "defaultY": 160
  }
 ]

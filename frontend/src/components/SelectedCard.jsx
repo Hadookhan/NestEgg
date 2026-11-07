@@ -1,6 +1,6 @@
 import { useStore } from '../store.js';
 import { cheaperFits, costPerYear, gbp, netCost, resaleValue } from '../lib/finance.js';
-import { clearanceOf } from '../lib/furniture.js';
+import { clearanceOf, isMounted } from '../lib/furniture.js';
 import { clearanceConflicts } from '../lib/geometry.js';
 
 const PRIORITY = { essential: 'Essential', soon: 'Buy soon', later: 'Can wait' };
@@ -18,6 +18,10 @@ export default function SelectedCard() {
   const { front, around, why } = clearanceOf(p);
   const { blockedBy, blocking } = me ? clearanceConflicts(me, all) : { blockedBy: [], blocking: [] };
   const names = (list) => list.map((o) => o.product.name.toLowerCase()).join(', ');
+  const mounted = isMounted(p);
+  const room = useStore.getState().room;
+  const y = me?.y || 0;
+  const maxY = Math.max(0, (room?.height || 240) - p.h);
 
   const months = prefs.tenancyMonths;
   const swaps = cheaperFits(p, products, prefs);
@@ -50,8 +54,18 @@ export default function SelectedCard() {
       {blocking.length > 0 && (
         <p className="warn-note small">This is in the way of the {names(blocking)}.</p>
       )}
+      {mounted && (
+        <label className="field height-field">
+          <span className="field-row">
+            Height off the floor <strong className="num">{y} cm</strong>
+          </span>
+          <input type="range" min="0" max={maxY} step="5" value={y}
+            onChange={(e) => useStore.getState().setHeight(uid, Number(e.target.value))} />
+          <span className="fine">Or press ↑ and ↓, or hold Shift while dragging. Drag it along any wall to move it.</span>
+        </label>
+      )}
       <div className="row">
-        <button className="btn small" onClick={() => rotate(uid)}>Rotate <kbd>R</kbd></button>
+        {!mounted && <button className="btn small" onClick={() => rotate(uid)}>Rotate <kbd>R</kbd></button>}
         <button className="btn small ghost" onClick={() => unplace(uid)}>Back to inventory</button>
         <button className="btn small ghost danger" onClick={() => useStore.getState().bin(uid)}>Bin</button>
       </div>

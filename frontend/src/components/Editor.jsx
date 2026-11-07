@@ -11,6 +11,7 @@ import CashflowModal from './CashflowModal.jsx';
 import RoomSetup from './RoomSetup.jsx';
 import Toast from './Toast.jsx';
 import HeatmapKey from './HeatmapKey.jsx';
+import CustomRoomModal from './CustomRoomModal.jsx';
 
 function useSessionSync(sessionId) {
   const setRoom = useStore((s) => s.setRoom);
@@ -88,6 +89,10 @@ function useShortcuts() {
       } else if (/^[1-9]$/.test(key)) {
         const entry = s.inventory[Number(key) - 1];
         if (entry) s.arm(entry.uid);
+      } else if ((key === 'arrowup' || key === 'pageup' || key === 'arrowdown' || key === 'pagedown') && s.selectedUid) {
+        e.preventDefault();
+        const step = (key === 'pageup' || key === 'pagedown' ? 20 : 5) * (key.includes('up') ? 1 : -1);
+        s.nudgeHeight(s.selectedUid, step);
       } else if (key === 'r' && s.selectedUid) {
         s.rotate(s.selectedUid);
       } else if ((key === 'delete' || key === 'backspace') && s.selectedUid) {
@@ -154,6 +159,9 @@ export default function Editor({ sessionId }) {
                 onClick={() => useStore.getState().toggleHeatmap()}>
                 Cost heatmap
               </button>
+              <button className="btn ghost" onClick={() => useStore.getState().clearRoom()}>
+                Clear room
+              </button>
               <button className="btn" onClick={() => useStore.getState().autoPlaceAll()}>
                 Suggest place
               </button>
@@ -187,7 +195,7 @@ export default function Editor({ sessionId }) {
           <p className="stage-hint">
             {armedUid
               ? 'Click the floor to place it. Esc to cancel.'
-              : 'Drag items to move, or onto the bin to bin them. R rotates, Delete puts it back in your inventory. Each tile is 50 cm.'}
+              : 'Drag items to move, or onto the bin to bin them. R rotates, ↑ ↓ raise wall items, Delete puts it back in your inventory. Each tile is 50 cm.'}
           </p>
         )}
         {room && view === 'stand' && (
@@ -206,6 +214,7 @@ export default function Editor({ sessionId }) {
       {panel === 'inventory' && <InventoryModal />}
       {panel === 'find' && <FindItemModal />}
       {panel === 'plan' && <CashflowModal />}
+      {panel === 'custom' && <CustomRoomModal />}
       {panel === 'room' && (
         <div className="modal-backdrop" onClick={() => useStore.getState().closePanel()}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>

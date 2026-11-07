@@ -353,3 +353,16 @@ input[type='range'] { width: 100%; accent-color: var(--green); }
   .bin { height: 80px; width: 56px; }
   .heat-key { top: auto; bottom: 104px; }
 }
+
+/* ---------- custom room ---------- */
+.custom-total { display: grid; justify-items: end; }
+.custom-total strong { font-size: 24px; }
+.custom-group { border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 8px 12px 10px; margin: 0; display: grid; gap: 4px; }
+.custom-group legend { font-weight: 700; padding: 0 6px; }
+.custom-row { display: grid; grid-template-columns: 1fr 72px 110px 110px; gap: 10px; align-items: center; padding: 3px 0; }
+.custom-row:not(.on) { color: var(--ink-soft); }
+.mini { display: flex; align-items: center; gap: 4px; }
+.mini input { height: 30px; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.height-field { background: #fff; border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 8px 10px; }
+@media (max-width: 860px) { .custom-row { grid-template-columns: 1fr 64px 96px; } .custom-row > :last-child { display: none; } }

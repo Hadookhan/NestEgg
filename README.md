@@ -152,6 +152,9 @@ Then put the https address in `frontend/.env` as `VITE_PUBLIC_URL` and restart `
 | Rotate | Select it, then R |
 | Back to inventory | Select it, then Delete |
 | Bin | Drag a hotbar slot or a room item onto the bin, or select an item and click the bin. Undo appears for a few seconds |
+| Clear the room | Clear room (top bar or side panel) moves every item back to your inventory. Undo appears for a few seconds |
+| Raise or lower wall items | Select a TV, picture, shelf, wall mirror or coat rack, then ↑ / ↓ (5 cm), Page Up / Page Down (20 cm), the height slider, or hold Shift while dragging |
+| Move wall items | Drag them; they slide along the walls and turn to face the room. They can't hang across the doorway below the door frame |
 | All items | E, or the All items button |
 | Close or cancel | Esc |
 | Look around | Stand in room, then drag (or Use phone motion) |
@@ -168,6 +171,14 @@ Grid tiles are 50 cm. Snapping is finer (10 cm) so small items like bedside tabl
 - The biggest item is tried against each wall, and the layout with the fewest problems wins. If the room is too tight, items still go in, but they're reported as squeezed.
 
 Select an item to see its clear space shaded on the floor (red if something is in the way), its doors or drawers open, and a warning naming whatever blocks it.
+
+### Wall-mounted items
+
+TVs, pictures, wall shelves, wall mirrors, bathroom mirror cabinets and coat racks hang on the walls at a height. Collisions are checked in 3D, so a picture can hang above a bed and a TV can sit just above its stand, but nothing can pass through anything else, the ceiling, or the door opening. "Suggest place" hangs the TV above the TV stand (or opposite the sofa), pictures above the sofa or bed, a shelf above the desk, and coat hooks near the door.
+
+### Custom room
+
+Choose **Custom** as the room type to set your own budget for each kind of item. Tick the item types the room needs, how many, and the most to spend on each. You can start from any room type's usual list. The total budget is the sum, the money panel shows a budget line per item type, and suggestions never go over any item's budget.
 
 ## The money features
 
@@ -204,6 +215,15 @@ All estimates are simple and labelled as such. The formulas are in `frontend/src
 - **"Not enough space to turn it here"**: drag the item somewhere clearer, then rotate.
 
 ## If the QR code doesn't work
+
+Start by running the connection check on the laptop, with the planner and backend running:
+
+```bash
+cd frontend
+npm run doctor
+```
+
+It lists the laptop's addresses, confirms both servers answer, spots an out-of-date `VITE_PUBLIC_URL`, and on Windows and Mac checks the firewall settings that usually cause this. It tells you exactly what to fix.
 
 The QR code is just a link. If typing the same address into the phone's browser doesn't load either, the problem is the network or the firewall, not the browser or the code. Work through these in order:
 

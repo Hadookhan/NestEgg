@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { useStore } from '../store.js';
-import { ROOM_TYPES, summarise, gbp } from '../lib/finance.js';
+import { ROOM_TYPES, summarise, gbp, totalBudget } from '../lib/finance.js';
 
 const THEMES = [
   { key: 'minimal', label: 'Minimal' },
@@ -24,6 +24,7 @@ export default function SidePanel() {
   const placed = useStore((s) => s.placed);
   const productById = useStore((s) => s.productById);
   const { setPref, suggest, openPanel } = useStore.getState();
+  const placedCount = placed.length;
 
   // Money covers everything picked: items in the room and items still in the inventory.
   const inRoom = useMemo(
@@ -74,11 +75,19 @@ export default function SidePanel() {
           </select>
         </label>
 
-        <label className="field">
-          <span className="field-row">Budget <strong className="num">{gbp(prefs.budget)}</strong></span>
-          <input type="range" min="100" max="3000" step="25" value={prefs.budget}
-            onChange={(e) => setPref('budget', Number(e.target.value))} />
-        </label>
+        {prefs.roomType === 'custom' ? (
+          <div className="field">
+            <span className="field-row">Budget <strong className="num">{gbp(totalBudget(prefs))}</strong></span>
+            <span className="fine">The total of your item budgets.</span>
+            <button className="btn small" onClick={() => openPanel('custom')}>Edit item budgets</button>
+          </div>
+        ) : (
+          <label className="field">
+            <span className="field-row">Budget <strong className="num">{gbp(prefs.budget)}</strong></span>
+            <input type="range" min="100" max="3000" step="25" value={prefs.budget}
+              onChange={(e) => setPref('budget', Number(e.target.value))} />
+          </label>
+        )}
 
         <label className="field">
           <span className="field-row">Staying for <strong className="num">{prefs.tenancyMonths} months</strong></span>
@@ -92,6 +101,11 @@ export default function SidePanel() {
         </label>
 
         <button className="btn wide" onClick={suggest} disabled={!room}>Suggest items for this room</button>
+        {room && placedCount > 0 && (
+          <button className="btn wide ghost" onClick={() => useStore.getState().clearRoom()}>
+            Clear all furniture from this room
+          </button>
+        )}
       </section>
 
       <section className="side-section money">

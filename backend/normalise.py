@@ -39,7 +39,15 @@ CATEGORIES = {
     "hamper": (3, 0.10, "later", ["bathroom", "bedroom"], ["laundry", "hamper", "basket"]),
     "stool": (4, 0.20, "later", ["bathroom"], ["stool"]),
     "shoe_rack": (5, 0.20, "later", ["living_room", "bedroom"], ["shoe"]),
+    "tv": (7, 0.35, "soon", ["living_room", "bedroom"], ["tv", "television", "smart tv", "inch screen"]),
+    "wall_art": (10, 0.20, "later", ["living_room", "bedroom", "dining", "home_office"], ["print", "poster", "canvas", "wall art", "framed"]),
+    "wall_shelf": (10, 0.25, "later", ["home_office", "living_room", "bedroom"], ["floating shelf", "wall shelf"]),
+    "wall_mirror": (10, 0.35, "later", ["bedroom", "bathroom", "living_room"], ["wall mirror", "round mirror"]),
+    "bath_wall_cabinet": (6, 0.20, "soon", ["bathroom"], ["mirror cabinet", "medicine cabinet"]),
+    "coat_hooks": (10, 0.20, "soon", ["living_room", "bedroom"], ["coat hook", "coat rack", "hooks"]),
 }
+# Hung on a wall: default height of the underside off the floor, in cm (None = centre at eye level).
+WALL_MOUNTED = {"tv": 70, "wall_art": None, "wall_shelf": 130, "wall_mirror": None, "bath_wall_cabinet": 120, "coat_hooks": 160}
 STYLES = {"minimal", "scandi", "industrial", "cosy", "bold"}
 TONES = {"light", "wood", "dark", "colour"}
 COLOURS = {
@@ -143,7 +151,15 @@ def finalise(raw, text, url, via):
         "condition": condition,
         "url": url or raw.get("url"),
         "source": "Added via n8n" if via == "n8n" else "Added via basic parser",
+        **_mount_fields(cat, float(raw["h"])),
     }
+
+
+def _mount_fields(cat, h):
+    if cat not in WALL_MOUNTED:
+        return {}
+    y = WALL_MOUNTED[cat]
+    return {"mount": "wall", "defaultY": y if y is not None else max(0, round(145 - h / 2))}
 
 
 async def normalise(text, url=None):

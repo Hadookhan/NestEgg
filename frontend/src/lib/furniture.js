@@ -1,7 +1,8 @@
 // How each kind of furniture behaves in a room. These rules drive "Suggest place",
 // the clearance warnings, and the open-doors preview on the selected item.
 //
-// place:   'wall'   back against a wall
+// place:   'mount'  hung on a wall at a height (TVs, pictures, shelves); can move up and down
+//          'wall'   back against a wall
 //          'centre' in the open middle of the room
 //          'free'   anywhere sensible (corner first)
 // align:   where along a wall to prefer: 'centre' | 'corner' | 'door'
@@ -12,6 +13,7 @@
 //                'sides'    at its left/right, facing it (armchair by coffee table)
 //                'front'    in front of it with a gap (coffee table and sofa)
 //                'opposite' on the opposite wall, facing it (TV and sofa)
+//                'above'    on the wall above it, `gap` cm higher (picture over a sofa)
 // opens:   'doors' | 'drawers'  (needs space in front to open)
 // front:   extra cm to keep clear in front (walking, sitting, reaching)
 // around:  cm to keep clear on every side (pulling chairs out)
@@ -40,7 +42,28 @@ export const RULES = {
   hamper: { place: 'free', near: [{ to: ['wardrobe', 'bath_cabinet'], how: 'beside' }] },
   stool: { place: 'free' },
   shoe_rack: { place: 'wall', align: 'door', front: 30, why: 'Shoes come off by the door' },
+
+  // Wall-mounted
+  tv: { place: 'mount', align: 'centre', near: [{ to: ['tv_stand'], how: 'above', gap: 15 }, { to: ['sofa', 'bed'], how: 'opposite' }] },
+  wall_art: { place: 'mount', align: 'centre', near: [{ to: ['sofa', 'bed', 'sideboard', 'desk', 'dining_table'], how: 'above', gap: 25 }] },
+  wall_shelf: { place: 'mount', align: 'corner', near: [{ to: ['desk'], how: 'above', gap: 45 }, { to: ['bath_cabinet'], how: 'beside' }] },
+  wall_mirror: { place: 'mount', align: 'door', near: [{ to: ['drawers'], how: 'above', gap: 20 }] },
+  bath_wall_cabinet: { place: 'mount', align: 'centre' },
+  coat_hooks: { place: 'mount', align: 'door' },
 };
+
+/** Hung on a wall rather than standing on the floor. */
+export const isMounted = (p) => p.mount === 'wall' || RULES[p.category]?.place === 'mount';
+
+/** Starting height off the floor, in cm, for a wall-mounted item. */
+export function defaultHeight(p) {
+  if (!isMounted(p)) return 0;
+  if (p.defaultY != null) return p.defaultY;
+  return Math.max(0, Math.round(145 - p.h / 2)); // pictures and mirrors centred at eye level
+}
+
+/** Items hung this high don't get in the way of walking or opening doors below them. */
+export const ABOVE_FLOOR_SPACE = 90;
 
 export const ruleOf = (p) => RULES[p.category] || { place: 'free' };
 
@@ -53,6 +76,7 @@ export const doorCount = (p) => Math.max(1, Math.ceil(p.w / 60));
  */
 export function clearanceOf(p) {
   const r = ruleOf(p);
+  if (isMounted(p)) return { front: 0, around: 0, why: null };
   let front = r.front || 0;
   let why = r.why || null;
   if (r.opens === 'doors') {

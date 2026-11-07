@@ -103,11 +103,19 @@ def health():
 
 
 def _describe(ip):
-    a, b = (int(x) for x in ip.split(".")[:2])
+    a, b, c = (int(x) for x in ip.split(".")[:3])
+    if a == 172 and b == 20 and c == 10:
+        return "iPhone hotspot"
+    if a == 192 and b == 168 and c == 43:
+        return "Android hotspot"
+    if a == 192 and b == 168 and c == 137:
+        return "Windows mobile hotspot"
+    if a == 192 and b == 168 and c == 56:
+        return "VirtualBox. Not the one"
     if a == 192 and b == 168 or a == 10:
-        return "home or office network"
+        return "Wi-Fi or hotspot"
     if a == 172 and 16 <= b <= 31:
-        return "often a virtual adapter (Docker, WSL, VPN). Usually not the one"
+        return "often a virtual adapter (Docker, WSL, VPN)"
     if a == 100 and 64 <= b <= 127:
         return "VPN or Tailscale. Only works if the phone is on it too"
     return "network"
@@ -142,8 +150,9 @@ def host():
             continue
         seen.add(ip)
         out.append({"ip": ip, "note": _describe(ip)})
-    # Put typical Wi-Fi ranges first.
-    out.sort(key=lambda c: 0 if c["note"] == "home or office network" else 1)
+    # Put hotspots and typical Wi-Fi ranges first, virtual adapters last.
+    rank = lambda c: 0 if "hotspot" in c["note"] else 1 if c["note"] == "Wi-Fi or hotspot" else 3 if "Not the one" in c["note"] else 2
+    out.sort(key=rank)
     return {"lan_ip": out[0]["ip"] if out else "127.0.0.1", "candidates": out}
 
 

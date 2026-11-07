@@ -2,7 +2,7 @@ import { useMemo, useRef } from 'react';
 import { useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 import { useStore } from '../store.js';
-import { clearanceOf, doorCount, ruleOf } from '../lib/furniture.js';
+import { clearanceOf, doorCount, isMounted, ruleOf } from '../lib/furniture.js';
 import { clearanceConflicts } from '../lib/geometry.js';
 
 const FLOOR = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
@@ -95,6 +95,48 @@ function Shape({ category, W, D, H, color }) {
           </mesh>
         </>
       );
+    case 'tv':
+      return (
+        <>
+          <Box size={[W, H, D * 0.6]} pos={[0, H / 2, -D * 0.2]} color="#111111" />
+          <mesh position={[0, H / 2, D * 0.1 + 0.001]}>
+            <planeGeometry args={[W * 0.96, H * 0.93]} />
+            <meshStandardMaterial color="#1E2A33" emissive="#2B4A5E" emissiveIntensity={0.35} roughness={0.25} />
+          </mesh>
+        </>
+      );
+    case 'wall_art':
+      return (
+        <>
+          <Box size={[W, H, D]} pos={[0, H / 2, 0]} color={shade(color, -0.35)} />
+          <mesh position={[0, H / 2, D / 2 + 0.001]}>
+            <planeGeometry args={[W * 0.86, H * 0.86]} />
+            <meshStandardMaterial color={color} roughness={0.9} />
+          </mesh>
+        </>
+      );
+    case 'wall_mirror':
+      return (
+        <>
+          <mesh position={[0, H / 2, 0]} rotation={[Math.PI / 2, 0, 0]}>
+            <cylinderGeometry args={[W / 2, W / 2, D, 40]} />
+            <meshStandardMaterial color={color} metalness={0.6} roughness={0.3} />
+          </mesh>
+          <mesh position={[0, H / 2, D / 2 + 0.002]}>
+            <circleGeometry args={[W / 2 - 0.03, 40]} />
+            <meshStandardMaterial color="#DCE8EC" metalness={0.9} roughness={0.08} />
+          </mesh>
+        </>
+      );
+    case 'coat_hooks':
+      return (
+        <>
+          <Box size={[W, H, D * 0.3]} pos={[0, H / 2, -D * 0.35]} color={color} />
+          {[-0.4, -0.2, 0, 0.2, 0.4].map((f) => (
+            <Box key={f} size={[0.02, 0.02, D * 0.7]} pos={[f * W, H * 0.4, D * 0.15]} color="#3A3A3A" />
+          ))}
+        </>
+      );
     default:
       return (
         <>
@@ -177,6 +219,8 @@ export default function Furniture({ item, heatT }) {
   const drag = useRef(null);
 
   const W = product.w / 100, D = product.d / 100, H = product.h / 100;
+  const y = item.y || 0;
+  const mounted = isMounted(product);
   const color = heatmap ? heatColour(heatT) : product.colour;
 
   const onDown = (e) => {
@@ -185,9 +229,12 @@ export default function Furniture({ item, heatT }) {
     const st = useStore.getState();
     if (st.armedUid) return; // a hotbar item is waiting to be placed
     e.target.setPointerCapture(e.pointerId);
-    const hit = e.ray.intersectPlane(FLOOR, HIT);
+    // Wall items are dragged on a level plane at their own height, so they follow the cursor.
+    const plane = mounted ? new THREE.Plane(new THREE.Vector3(0, 1, 0), -(y / 100 + H / 2)) : FLOOR;
+    const hit = e.ray.intersectPlane(plane, HIT);
     if (!hit) return;
-    drag.current = { dx: x - hit.x * 100, dz: z - hit.z * 100 };
+    const ne = e.nativeEvent || e;
+    drag.current = { dx: x - hit.x * 100, dz: z - hit.z * 100, plane, startY: y, startClientY: ne.clientY };
     if (controls) controls.enabled = false;
     st.select(uid);
     st.setDragging(true);
@@ -204,9 +251,15 @@ export default function Furniture({ item, heatT }) {
     const over = overBinAt(e);
     st.setOverBin(over);
     if (over) return;
-    const hit = e.ray.intersectPlane(FLOOR, HIT);
+    const ne = e.nativeEvent || e;
+    // Shift-drag raises and lowers wall items instead of sliding them.
+    if (mounted && ne.shiftKey) {
+      st.setHeight(uid, Math.round((drag.current.startY + (drag.current.startClientY - ne.clientY) * 0.6) / 5) * 5);
+      return;
+    }
+    const hit = e.ray.intersectPlane(drag.current.plane, HIT);
     if (!hit) return;
-    useStore.getState().moveItem(uid, hit.x * 100 + drag.current.dx, hit.z * 100 + drag.current.dz);
+    st.moveItem(uid, hit.x * 100 + drag.current.dx, hit.z * 100 + drag.current.dz);
   };
   const onUp = (e) => {
     if (!drag.current) return;
@@ -230,7 +283,7 @@ export default function Furniture({ item, heatT }) {
 
   return (
     <group
-      position={[x / 100, 0, z / 100]}
+      position={[x / 100, y / 100, z / 100]}
       rotation={[0, (rot * Math.PI) / 2, 0]}
       onPointerDown={onDown}
       onPointerMove={onMove}
@@ -240,6 +293,12 @@ export default function Furniture({ item, heatT }) {
     >
       <Shape category={product.category} W={W} D={D} H={H} color={color} />
       {selected && view === 'plan' && <ClearZone product={product} W={W} D={D} warn={conflicted} />}
+      {selected && mounted && y > 0 && (
+        <mesh position={[0, -y / 200, D / 2]}>
+          <boxGeometry args={[0.006, y / 100, 0.006]} />
+          <meshBasicMaterial color="#E0A526" />
+        </mesh>
+      )}
       {selected && <OpenPreview product={product} W={W} D={D} H={H} color={color} />}
       {(selected || blocked) && (
         <lineSegments position={[0, H / 2, 0]}>
@@ -248,7 +307,7 @@ export default function Furniture({ item, heatT }) {
         </lineSegments>
       )}
       {(selected || blocked) && (
-        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.004, 0]}>
+        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.004 - y / 100, 0]}>
           <planeGeometry args={[W, D]} />
           <meshBasicMaterial color={blocked ? '#C0392B' : '#E0A526'} transparent opacity={0.25} />
         </mesh>

@@ -6,6 +6,8 @@ export const ENVELOPES = [
   { key: 'seating', label: 'Seating' },
   { key: 'surfaces', label: 'Tables and desks' },
   { key: 'finishing', label: 'Finishing touches' },
+  { key: 'tech', label: 'TV and tech' },
+  { key: 'decor', label: 'Walls and decor' },
 ];
 
 export const ENVELOPE_OF = {
@@ -15,15 +17,29 @@ export const ENVELOPE_OF = {
   sofa: 'seating', armchair: 'seating', office_chair: 'seating', dining_chair: 'seating', stool: 'seating',
   desk: 'surfaces', coffee_table: 'surfaces', tv_stand: 'surfaces', dining_table: 'surfaces',
   floor_lamp: 'finishing', mirror: 'finishing', towel_stand: 'finishing',
+  tv: 'tech', bath_wall_cabinet: 'storage',
+  wall_art: 'decor', wall_shelf: 'decor', wall_mirror: 'decor', coat_hooks: 'decor',
 };
+
+// Plain names for each kind of item (used by the custom room editor and budgets).
+export const CATEGORY_LABELS = {
+  bed: 'Bed', wardrobe: 'Wardrobe', drawers: 'Chest of drawers', bedside: 'Bedside table', mirror: 'Standing mirror',
+  floor_lamp: 'Floor lamp', sofa: 'Sofa', armchair: 'Armchair', coffee_table: 'Coffee table', tv_stand: 'TV stand',
+  bookshelf: 'Bookcase', desk: 'Desk', office_chair: 'Desk chair', filing_cabinet: 'Filing cabinet',
+  dining_table: 'Dining table', dining_chair: 'Dining chair', sideboard: 'Sideboard', bath_cabinet: 'Bathroom cabinet',
+  bath_shelf: 'Bathroom shelf', towel_stand: 'Towel stand', hamper: 'Laundry basket', stool: 'Stool',
+  shoe_rack: 'Shoe rack', tv: 'TV (wall-mounted)', wall_art: 'Picture or print', wall_shelf: 'Wall shelf',
+  wall_mirror: 'Wall mirror', bath_wall_cabinet: 'Bathroom wall cabinet', coat_hooks: 'Coat hooks',
+};
+export const categoryLabel = (c) => CATEGORY_LABELS[c] || c.replace(/_/g, ' ');
 
 // Share of the total budget each envelope gets, by room type.
 export const ALLOCATION = {
-  bedroom: { sleep: 0.55, storage: 0.25, seating: 0.05, surfaces: 0.1, finishing: 0.05 },
-  living_room: { storage: 0.15, seating: 0.55, surfaces: 0.22, finishing: 0.08 },
-  home_office: { storage: 0.15, seating: 0.4, surfaces: 0.38, finishing: 0.07 },
-  dining: { storage: 0.1, seating: 0.4, surfaces: 0.45, finishing: 0.05 },
-  bathroom: { storage: 0.7, seating: 0.1, finishing: 0.2 },
+  bedroom: { sleep: 0.52, storage: 0.25, seating: 0.05, surfaces: 0.1, finishing: 0.05, decor: 0.03 },
+  living_room: { storage: 0.1, seating: 0.42, surfaces: 0.15, finishing: 0.04, tech: 0.25, decor: 0.04 },
+  home_office: { storage: 0.15, seating: 0.4, surfaces: 0.35, finishing: 0.05, decor: 0.05 },
+  dining: { storage: 0.1, seating: 0.4, surfaces: 0.42, finishing: 0.03, decor: 0.05 },
+  bathroom: { storage: 0.7, seating: 0.1, finishing: 0.15, decor: 0.05 },
 };
 
 export const ROOM_TYPES = [
@@ -32,7 +48,14 @@ export const ROOM_TYPES = [
   { key: 'home_office', label: 'Home office' },
   { key: 'dining', label: 'Kitchen diner' },
   { key: 'bathroom', label: 'Bathroom' },
+  { key: 'custom', label: 'Custom (set your own budgets)' },
 ];
+
+/** Total budget: the slider, or for a custom room the sum of its item budgets. */
+export function totalBudget(prefs) {
+  if (prefs.roomType !== 'custom') return prefs.budget;
+  return Object.values(prefs.custom || {}).filter((c) => c.on).reduce((s, c) => s + (Number(c.budget) || 0), 0);
+}
 
 export const gbp = (n) =>
   '£' + Math.round(n).toLocaleString('en-GB');
@@ -55,17 +78,30 @@ export const costPerYear = (p) => p.price / Math.max(1, p.lifespanYears || 5);
 
 export function summarise(products, prefs) {
   const months = prefs.tenancyMonths;
-  const alloc = ALLOCATION[prefs.roomType] || {};
   const upfront = products.reduce((s, p) => s + p.price, 0);
   const resale = products.reduce((s, p) => s + resaleValue(p, months), 0);
   const perYear = products.reduce((s, p) => s + costPerYear(p), 0);
-  const envelopes = ENVELOPES.map((e) => {
-    const spent = products.filter((p) => (ENVELOPE_OF[p.category] || 'finishing') === e.key)
-      .reduce((s, p) => s + p.price, 0);
-    const budget = prefs.budget * (alloc[e.key] || 0);
-    return { ...e, budget, spent, over: spent > budget + 0.5 };
-  }).filter((e) => e.budget > 0 || e.spent > 0);
-  return { upfront, resale, net: upfront - resale, perYear, envelopes, overBudget: upfront > prefs.budget };
+  const budgetTotal = totalBudget(prefs);
+  let envelopes;
+  if (prefs.roomType === 'custom') {
+    // One budget line per item type the user set up, plus anything else they added.
+    const custom = prefs.custom || {};
+    const cats = [...new Set([...Object.keys(custom).filter((c) => custom[c].on), ...products.map((p) => p.category)])];
+    envelopes = cats.map((c) => {
+      const spent = products.filter((p) => p.category === c).reduce((s, p) => s + p.price, 0);
+      const budget = custom[c]?.on ? Number(custom[c].budget) || 0 : 0;
+      return { key: c, label: categoryLabel(c), budget, spent, over: spent > budget + 0.5 };
+    });
+  } else {
+    const alloc = ALLOCATION[prefs.roomType] || {};
+    envelopes = ENVELOPES.map((e) => {
+      const spent = products.filter((p) => (ENVELOPE_OF[p.category] || 'finishing') === e.key)
+        .reduce((s, p) => s + p.price, 0);
+      const budget = prefs.budget * (alloc[e.key] || 0);
+      return { ...e, budget, spent, over: spent > budget + 0.5 };
+    }).filter((e) => e.budget > 0 || e.spent > 0);
+  }
+  return { upfront, resale, net: upfront - resale, perYear, envelopes, budgetTotal, overBudget: upfront > budgetTotal };
 }
 
 /** Cheaper products of the same kind that fit in the same footprint. */
@@ -94,8 +130,9 @@ const PRIORITY_ORDER = { essential: 0, soon: 1, later: 2 };
 // Within a priority tier, what matters most to actually live in the room.
 const NEED_RANK = [
   'bed', 'sofa', 'dining_table', 'bath_cabinet', 'desk', 'office_chair', 'dining_chair',
-  'wardrobe', 'drawers', 'bedside', 'coffee_table', 'bookshelf', 'towel_stand', 'bath_shelf',
-  'armchair', 'tv_stand', 'sideboard', 'filing_cabinet', 'floor_lamp', 'mirror', 'hamper', 'stool', 'shoe_rack',
+  'wardrobe', 'drawers', 'bedside', 'coffee_table', 'bookshelf', 'bath_wall_cabinet', 'towel_stand', 'bath_shelf',
+  'coat_hooks', 'armchair', 'tv', 'tv_stand', 'sideboard', 'filing_cabinet', 'floor_lamp', 'mirror', 'wall_shelf',
+  'wall_mirror', 'hamper', 'stool', 'shoe_rack', 'wall_art',
 ];
 const needRank = (cat) => {
   const i = NEED_RANK.indexOf(cat);

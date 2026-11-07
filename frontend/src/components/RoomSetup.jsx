@@ -89,6 +89,13 @@ export default function RoomSetup({ sessionId, inModal }) {
             </div>
           )}
           <p className="fine">Phone and computer need to be on the same Wi-Fi. Or type this into the phone's browser: <span className="code">{scanUrl}</span></p>
+          {envBase && envBase.startsWith('http://') && candidates.length > 0 &&
+            !candidates.some((c) => envBase.includes(`//${c.ip}:`)) && (
+            <p className="warn-note small">
+              This link uses {envBase}, which this computer no longer has (addresses change when you switch Wi-Fi or hotspot).
+              Clear VITE_PUBLIC_URL in frontend/.env and restart npm run dev.
+            </p>
+          )}
           {candidates.length > 1 && !envBase && (
             <label className="field">
               <span>Wrong address? This computer has several. Pick the Wi-Fi one:</span>

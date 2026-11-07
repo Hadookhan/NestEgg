@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import * as G from './lib/geometry.js';
-import { suggestProducts } from './lib/suggest.js';
+import { customPreset, suggestProducts } from './lib/suggest.js';
+import { defaultHeight, isMounted } from './lib/furniture.js';
 import { gbp } from './lib/finance.js';
 
 let counter = 0;
@@ -14,7 +15,7 @@ export const useStore = create((set, get) => ({
   products: [],
   productById: {},
   inventory: [], // items not yet in the room: [{ uid, productId }]. The first 9 are the hotbar.
-  placed: [], // items in the room: [{ uid, productId, x, z, rot }]
+  placed: [], // items in the room: [{ uid, productId, x, z, rot, y }] (y = cm off the floor)
   binned: null, // last binned item, for undo
   selectedUid: null,
   armedUid: null, // hotbar item waiting for a click on the floor
@@ -28,7 +29,9 @@ export const useStore = create((set, get) => ({
   toast: null,
   prefs: {
     roomType: 'bedroom', theme: 'scandi', tone: 'any', budget: 600, tenancyMonths: 12, includeUsed: true,
+    custom: {}, // custom room: { [category]: { on, count, budget } }
   },
+  clearedRoom: null, // for undoing Clear room
   money: { savings: 400, income: 1150, fixed: 850, paydayDay: 25, buffer: 150 },
 
   // ---------- helpers ----------
@@ -63,8 +66,8 @@ export const useStore = create((set, get) => ({
     const kept = [];
     const returned = [];
     for (const pl of get().placedWithProducts()) {
-      if (G.canPlace(pl.product, pl.x, pl.z, pl.rot, room, others)) {
-        kept.push({ uid: pl.uid, productId: pl.productId, x: pl.x, z: pl.z, rot: pl.rot });
+      if (G.canPlace(pl.product, pl.x, pl.z, pl.rot, room, others, pl.y || 0)) {
+        kept.push({ uid: pl.uid, productId: pl.productId, x: pl.x, z: pl.z, rot: pl.rot, y: pl.y || 0 });
         others.push({ ...pl, rect: G.rectAt(pl.product, pl.x, pl.z, pl.rot) });
       } else {
         returned.push({ uid: pl.uid, productId: pl.productId });
@@ -93,7 +96,17 @@ export const useStore = create((set, get) => ({
     return { inventory, placed, prefs, money };
   },
 
-  setPref: (key, value) => set({ prefs: { ...get().prefs, [key]: value } }),
+  setPref: (key, value) => {
+    const prefs = { ...get().prefs, [key]: value };
+    // Switching to a custom room for the first time: start from the previous room type's items.
+    if (key === 'roomType' && value === 'custom' && !Object.keys(prefs.custom || {}).length) {
+      prefs.custom = customPreset(get().prefs.roomType, get().products);
+      set({ prefs, panel: 'custom' });
+      return;
+    }
+    set({ prefs });
+  },
+  setCustom: (custom) => set({ prefs: { ...get().prefs, custom } }),
   setMoney: (key, value) => set({ money: { ...get().money, [key]: value } }),
   setView: (view) => set({ view, selectedUid: view === 'stand' ? null : get().selectedUid, armedUid: null }),
   toggleHeatmap: () => set({ heatmap: !get().heatmap }),
@@ -141,7 +154,7 @@ export const useStore = create((set, get) => ({
       // Put it back where it was if that spot is still free; otherwise back in the inventory.
       const p = get().productById[b.entry.productId];
       const others = G.rectsOf(get().placedWithProducts());
-      if (p && get().room && G.canPlace(p, b.entry.x, b.entry.z, b.entry.rot, get().room, others)) {
+      if (p && get().room && G.canPlace(p, b.entry.x, b.entry.z, b.entry.rot, get().room, others, b.entry.y || 0)) {
         set({ placed: [...get().placed, b.entry] });
       } else {
         set({ inventory: [{ uid: b.entry.uid, productId: b.entry.productId }, ...get().inventory] });
@@ -161,7 +174,7 @@ export const useStore = create((set, get) => ({
     const entry = inventory.find((i) => i.uid === uid);
     const p = entry && productById[entry.productId];
     if (!room || !p) return false;
-    const spot = G.findNearestFree(p, x, z, room, G.rectsOf(placedWithProducts()));
+    const spot = G.findNearestFree(p, x, z, room, G.rectsOf(placedWithProducts()), undefined, undefined, defaultHeight(p));
     if (!spot) {
       get().notify(`There's no free space for the ${p.name.toLowerCase()} there`);
       return false;
@@ -179,10 +192,13 @@ export const useStore = create((set, get) => ({
     const cur = placed.find((pl) => pl.uid === uid);
     const p = cur && productById[cur.productId];
     if (!p) return false;
-    const c = G.clampCentre(p, G.snap(x), G.snap(z), cur.rot, room);
-    if (c.x === cur.x && c.z === cur.z) return true;
+    // Wall items slide along the walls and turn to face the room; floor items keep their rotation.
+    const c = isMounted(p)
+      ? G.wallSnap(p, x, z, room)
+      : { ...G.clampCentre(p, G.snap(x), G.snap(z), cur.rot, room), rot: cur.rot };
+    if (c.x === cur.x && c.z === cur.z && c.rot === cur.rot) return true;
     const others = G.rectsOf(placedWithProducts(), uid);
-    if (!G.canPlace(p, c.x, c.z, cur.rot, room, others)) {
+    if (!G.canPlace(p, c.x, c.z, c.rot, room, others, cur.y || 0)) {
       if (get().blockedUid !== uid) {
         set({ blockedUid: uid });
         setTimeout(() => get().blockedUid === uid && set({ blockedUid: null }), 350);
@@ -197,6 +213,7 @@ export const useStore = create((set, get) => ({
     const cur = placed.find((pl) => pl.uid === uid);
     const p = cur && productById[cur.productId];
     if (!p) return;
+    if (isMounted(p)) return get().notify('Wall items face the room automatically. Drag it to another wall to turn it.');
     const rot = (cur.rot + 1) % 4;
     const others = G.rectsOf(placedWithProducts(), uid);
     const c = G.clampCentre(p, cur.x, cur.z, rot, room);
@@ -206,6 +223,30 @@ export const useStore = create((set, get) => ({
     if (!spot) return get().notify('Not enough space to turn it here. Move it somewhere clearer first.');
     set({ placed: placed.map((pl) => (pl.uid === uid ? { ...pl, ...spot } : pl)) });
   },
+  /** Raise or lower a wall-mounted item. Returns false if something is in the way. */
+  setHeight: (uid, y) => {
+    const { room, placed, productById, placedWithProducts } = get();
+    const cur = placed.find((pl) => pl.uid === uid);
+    const p = cur && productById[cur.productId];
+    if (!p || !isMounted(p)) return false;
+    const ny = Math.min(Math.max(0, Math.round(y)), (room.height || 240) - p.h);
+    if (ny === (cur.y || 0)) return true;
+    const others = G.rectsOf(placedWithProducts(), uid);
+    if (!G.canPlace(p, cur.x, cur.z, cur.rot, room, others, ny)) {
+      if (get().blockedUid !== uid) {
+        set({ blockedUid: uid });
+        setTimeout(() => get().blockedUid === uid && set({ blockedUid: null }), 350);
+      }
+      return false;
+    }
+    set({ placed: placed.map((pl) => (pl.uid === uid ? { ...pl, y: ny } : pl)) });
+    return true;
+  },
+  nudgeHeight: (uid, dy) => {
+    const cur = get().placed.find((pl) => pl.uid === uid);
+    if (cur) get().setHeight(uid, (cur.y || 0) + dy);
+  },
+
   /** Take an item out of the room and put it back at the front of the inventory. */
   unplace: (uid) => {
     const pl = get().placed.find((p) => p.uid === uid);
@@ -216,11 +257,24 @@ export const useStore = create((set, get) => ({
       selectedUid: get().selectedUid === uid ? null : get().selectedUid,
     });
   },
-  clearRoom: () => set({
-    inventory: [...get().placed.map(({ uid, productId }) => ({ uid, productId })), ...get().inventory],
-    placed: [],
-    selectedUid: null,
-  }),
+  /** Move every item in the room back to the inventory (with undo). */
+  clearRoom: () => {
+    const { placed, inventory } = get();
+    if (!placed.length) return get().notify('The room is already empty.');
+    set({
+      clearedRoom: { placed, inventory },
+      inventory: [...placed.map(({ uid, productId }) => ({ uid, productId })), ...inventory],
+      placed: [],
+      selectedUid: null,
+      armedUid: null,
+    });
+    get().notify(`Moved ${placed.length} items back to your inventory`, { label: 'Undo', run: () => get().undoClear() });
+  },
+  undoClear: () => {
+    const c = get().clearedRoom;
+    if (!c) return;
+    set({ placed: c.placed, inventory: c.inventory, clearedRoom: null, toast: null });
+  },
 
   swapProduct: (uid, newProductId) => {
     const { productById, room, placedWithProducts } = get();
@@ -231,7 +285,7 @@ export const useStore = create((set, get) => ({
     if (cur) {
       const others = G.rectsOf(placedWithProducts(), uid);
       const c = G.clampCentre(newP, cur.x, cur.z, cur.rot, room);
-      if (G.canPlace(newP, c.x, c.z, cur.rot, room, others)) {
+      if (G.canPlace(newP, c.x, c.z, cur.rot, room, others, cur.y || 0)) {
         set({ placed: get().placed.map((pl) => (pl.uid === uid ? { ...pl, ...c, productId: newProductId } : pl)) });
       } else {
         set({ placed: get().placed.map((pl) => (pl.uid === uid ? { ...pl, productId: newProductId } : pl)) });
@@ -267,7 +321,7 @@ export const useStore = create((set, get) => ({
     const { added, failed, squeezed } = G.autoPlace(toPlace, placedWithProducts(), room);
     const addedUids = new Set(added.map((a) => a.uid));
     set({
-      placed: [...get().placed, ...added.map(({ uid, productId, x, z, rot }) => ({ uid, productId, x, z, rot }))],
+      placed: [...get().placed, ...added.map(({ uid, productId, x, z, rot, y }) => ({ uid, productId, x, z, rot, y: y || 0 }))],
       inventory: inventory.filter((i) => !addedUids.has(i.uid)),
       selectedUid: null,
     });
