@@ -1,0 +1,1260 @@
+[
+ {
+  "id": "bed-pine-single",
+  "name": "Pine single bed with mattress",
+  "category": "bed",
+  "rooms": [
+   "bedroom"
+  ],
+  "price": 189,
+  "currency": "GBP",
+  "w": 98,
+  "d": 198,
+  "h": 90,
+  "colour": "#D9B98C",
+  "colourName": "natural pine",
+  "tone": "wood",
+  "styles": [
+   "scandi",
+   "cosy"
+  ],
+  "priority": "essential",
+  "lifespanYears": 6,
+  "resaleRate": 0.3,
+  "condition": "new",
+  "url": null,
+  "source": "Sample data (illustrative prices)"
+ },
+ {
+  "id": "bed-metal-double",
+  "name": "Black metal double bed with mattress",
+  "category": "bed",
+  "rooms": [
+   "bedroom"
+  ],
+  "price": 259,
+  "currency": "GBP",
+  "w": 145,
+  "d": 200,
+  "h": 100,
+  "colour": "#2B2B2B",
+  "colourName": "black",
+  "tone": "dark",
+  "styles": [
+   "industrial",
+   "minimal"
+  ],
+  "priority": "essential",
+  "lifespanYears": 7,
+  "resaleRate": 0.3,
+  "condition": "new",
+  "url": null,
+  "source": "Sample data (illustrative prices)"
+ },
+ {
+  "id": "bed-upholstered-double",
+  "name": "Grey upholstered double bed with mattress",
+  "category": "bed",
+  "rooms": [
+   "bedroom"
+  ],
+  "price": 399,
+  "currency": "GBP",
+  "w": 150,
+  "d": 210,
+  "h": 110,
+  "colour": "#8A8F94",
+  "colourName": "grey",
+  "tone": "light",
+  "styles": [
+   "cosy",
+   "minimal"
+  ],
+  "priority": "essential",
+  "lifespanYears": 8,
+  "resaleRate": 0.35,
+  "condition": "new",
+  "url": null,
+  "source": "Sample data (illustrative prices)"
+ },
+ {
+  "id": "bed-oak-used",
+  "name": "Oak double bed frame (second-hand) with new mattress",
+  "category": "bed",
+  "rooms": [
+   "bedroom"
+  ],
+  "price": 170,
+  "currency": "GBP",
+  "w": 145,
+  "d": 200,
+  "h": 95,
+  "colour": "#B08850",
+  "colourName": "oak",
+  "tone": "wood",
+  "styles": [
+   "cosy",
+   "scandi"
+  ],
+  "priority": "essential",
+  "lifespanYears": 6,
+  "resaleRate": 0.55,
+  "condition": "used",
+  "url": null,
+  "source": "Sample data (illustrative prices)"
+ },
+ {
+  "id": "wardrobe-white-2door",
+  "name": "White two-door wardrobe",
+  "category": "wardrobe",
+  "rooms": [
+   "bedroom"
+  ],
+  "price": 95,
+  "currency": "GBP",
+  "w": 80,
+  "d": 52,
+  "h": 180,
+  "colour": "#F2F2EF",
+  "colourName": "white",
+  "tone": "light",
+  "styles": [
+   "minimal",
+   "scandi"
+  ],
+  "priority": "essential",
+  "lifespanYears": 5,
+  "resaleRate": 0.25,
+  "condition": "new",
+  "url": null,
+  "source": "Sample data (illustrative prices)"
+ },
+ {
+  "id": "wardrobe-oak-3door",
+  "name": "Oak-effect three-door wardrobe",
+  "category": "wardrobe",
+  "rooms": [
+   "bedroom"
+  ],
+  "price": 229,
+  "currency": "GBP",
+  "w": 120,
+  "d": 58,
+  "h": 200,
+  "colour": "#C49A6C",
+  "colourName": "oak",
+  "tone": "wood",
+  "styles": [
+   "scandi",
+   "cosy"
+  ],
+  "priority": "soon",
+  "lifespanYears": 8,
+  "resaleRate": 0.35,
+  "condition": "new",
+  "url": null,
+  "source": "Sample data (illustrative prices)"
+ },
+ {
+  "id": "wardrobe-fabric",
+  "name": "Fabric wardrobe with hanging rail",
+  "category": "wardrobe",
+  "rooms": [
+   "bedroom"
+  ],
+  "price": 39,
+  "currency": "GBP",
+  "w": 100,
+  "d": 45,
+  "h": 170,
+  "colour": "#6E7B75",
+  "colourName": "sage grey",
+  "tone": "colour",
+  "styles": [
+   "minimal"
+  ],
+  "priority": "essential",
+  "lifespanYears": 2,
+  "resaleRate": 0.1,
+  "condition": "new",
+  "url": null,
+  "source": "Sample data (illustrative prices)"
+ },
+ {
+  "id": "drawers-white-4",
+  "name": "White four-drawer chest",
+  "category": "drawers",
+  "rooms": [
+   "bedroom"
+  ],
+  "price": 59,
+  "currency": "GBP",
+  "w": 60,
+  "d": 40,
+  "h": 90,
+  "colour": "#F2F2EF",
+  "colourName": "white",
+  "tone": "light",
+  "styles": [
+   "minimal",
+   "scandi"
+  ],
+  "priority": "soon",
+  "lifespanYears": 5,
+  "resaleRate": 0.3,
+  "condition": "new",
+  "url": null,
+  "source": "Sample data (illustrative prices)"
+ },
+ {
+  "id": "drawers-walnut-used",
+  "name": "Walnut six-drawer chest (second-hand)",
+  "category": "drawers",
+  "rooms": [
+   "bedroom"
+  ],
+  "price": 35,
+  "currency": "GBP",
+  "w": 80,
+  "d": 45,
+  "h": 80,
+  "colour": "#7A5236",
+  "colourName": "walnut",
+  "tone": "wood",
+  "styles": [
+   "cosy",
+   "bold"
+  ],
+  "priority": "soon",
+  "lifespanYears": 5,
+  "resaleRate": 0.6,
+  "condition": "used",
+  "url": null,
+  "source": "Sample data (illustrative prices)"
+ },
+ {
+  "id": "bedside-oak",
+  "name": "Oak bedside table",
+  "category": "bedside",
+  "rooms": [
+   "bedroom"
+  ],
+  "price": 29,
+  "currency": "GBP",
+  "w": 40,
+  "d": 35,
+  "h": 50,
+  "colour": "#C49A6C",
+  "colourName": "oak",
+  "tone": "wood",
+  "styles": [
+   "scandi",
+   "cosy"
+  ],
+  "priority": "soon",
+  "lifespanYears": 5,
+  "resaleRate": 0.3,
+  "condition": "new",
+  "url": null,
+  "source": "Sample data (illustrative prices)"
+ },
+ {
+  "id": "bedside-black",
+  "name": "Black metal bedside table",
+  "category": "bedside",
+  "rooms": [
+   "bedroom"
+  ],
+  "price": 35,
+  "currency": "GBP",
+  "w": 40,
+  "d": 40,
+  "h": 55,
+  "colour": "#2B2B2B",
+  "colourName": "black",
+  "tone": "dark",
+  "styles": [
+   "industrial",
+   "minimal"
+  ],
+  "priority": "soon",
+  "lifespanYears": 6,
+  "resaleRate": 0.3,
+  "condition": "new",
+  "url": null,
+  "source": "Sample data (illustrative prices)"
+ },
+ {
+  "id": "mirror-standing",
+  "name": "Brass-framed standing mirror",
+  "category": "mirror",
+  "rooms": [
+   "bedroom"
+  ],
+  "price": 40,
+  "currency": "GBP",
+  "w": 45,
+  "d": 35,
+  "h": 160,
+  "colour": "#C8A44A",
+  "colourName": "brass",
+  "tone": "colour",
+  "styles": [
+   "bold",
+   "cosy"
+  ],
+  "priority": "later",
+  "lifespanYears": 6,
+  "resaleRate": 0.35,
+  "condition": "new",
+  "url": null,
+  "source": "Sample data (illustrative prices)"
+ },
+ {
+  "id": "lamp-black-arc",
+  "name": "Black arc floor lamp",
+  "category": "floor_lamp",
+  "rooms": [
+   "bedroom",
+   "living_room",
+   "home_office"
+  ],
+  "price": 34,
+  "currency": "GBP",
+  "w": 30,
+  "d": 30,
+  "h": 160,
+  "colour": "#2B2B2B",
+  "colourName": "black",
+  "tone": "dark",
+  "styles": [
+   "industrial",
+   "minimal"
+  ],
+  "priority": "later",
+  "lifespanYears": 5,
+  "resaleRate": 0.3,
+  "condition": "new",
+  "url": null,
+  "source": "Sample data (illustrative prices)"
+ },
+ {
+  "id": "lamp-rattan",
+  "name": "Rattan shade floor lamp",
+  "category": "floor_lamp",
+  "rooms": [
+   "bedroom",
+   "living_room",
+   "home_office"
+  ],
+  "price": 45,
+  "currency": "GBP",
+  "w": 35,
+  "d": 35,
+  "h": 150,
+  "colour": "#C8A878",
+  "colourName": "rattan",
+  "tone": "wood",
+  "styles": [
+   "cosy",
+   "bold"
+  ],
+  "priority": "later",
+  "lifespanYears": 5,
+  "resaleRate": 0.3,
+  "condition": "new",
+  "url": null,
+  "source": "Sample data (illustrative prices)"
+ },
+ {
+  "id": "sofa-2seat-grey",
+  "name": "Grey two-seater sofa",
+  "category": "sofa",
+  "rooms": [
+   "living_room"
+  ],
+  "price": 249,
+  "currency": "GBP",
+  "w": 150,
+  "d": 85,
+  "h": 80,
+  "colour": "#8A8F94",
+  "colourName": "grey",
+  "tone": "light",
+  "styles": [
+   "minimal",
+   "scandi"
+  ],
+  "priority": "essential",
+  "lifespanYears": 6,
+  "resaleRate": 0.25,
+  "condition": "new",
+  "url": null,
+  "source": "Sample data (illustrative prices)"
+ },
+ {
+  "id": "sofa-3seat-velvet",
+  "name": "Green velvet three-seater sofa",
+  "category": "sofa",
+  "rooms": [
+   "living_room"
+  ],
+  "price": 549,
+  "currency": "GBP",
+  "w": 205,
+  "d": 90,
+  "h": 85,
+  "colour": "#2F5D50",
+  "colourName": "forest green",
+  "tone": "colour",
+  "styles": [
+   "bold",
+   "cosy"
+  ],
+  "priority": "essential",
+  "lifespanYears": 8,
+  "resaleRate": 0.35,
+  "condition": "new",
+  "url": null,
+  "source": "Sample data (illustrative prices)"
+ },
+ {
+  "id": "sofa-bed-navy",
+  "name": "Navy sofa bed",
+  "category": "sofa",
+  "rooms": [
+   "living_room"
+  ],
+  "price": 299,
+  "currency": "GBP",
+  "w": 190,
+  "d": 90,
+  "h": 85,
+  "colour": "#2C3E5C",
+  "colourName": "navy",
+  "tone": "dark",
+  "styles": [
+   "minimal",
+   "cosy"
+  ],
+  "priority": "essential",
+  "lifespanYears": 5,
+  "resaleRate": 0.25,
+  "condition": "new",
+  "url": null,
+  "source": "Sample data (illustrative prices)"
+ },
+ {
+  "id": "sofa-leather-used",
+  "name": "Brown leather three-seater (second-hand)",
+  "category": "sofa",
+  "rooms": [
+   "living_room"
+  ],
+  "price": 120,
+  "currency": "GBP",
+  "w": 200,
+  "d": 90,
+  "h": 85,
+  "colour": "#6B4E3D",
+  "colourName": "brown leather",
+  "tone": "dark",
+  "styles": [
+   "industrial",
+   "cosy"
+  ],
+  "priority": "essential",
+  "lifespanYears": 5,
+  "resaleRate": 0.6,
+  "condition": "used",
+  "url": null,
+  "source": "Sample data (illustrative prices)"
+ },
+ {
+  "id": "armchair-mustard",
+  "name": "Mustard accent armchair",
+  "category": "armchair",
+  "rooms": [
+   "living_room"
+  ],
+  "price": 129,
+  "currency": "GBP",
+  "w": 75,
+  "d": 80,
+  "h": 80,
+  "colour": "#D9A441",
+  "colourName": "mustard",
+  "tone": "colour",
+  "styles": [
+   "bold",
+   "cosy"
+  ],
+  "priority": "soon",
+  "lifespanYears": 7,
+  "resaleRate": 0.3,
+  "condition": "new",
+  "url": null,
+  "source": "Sample data (illustrative prices)"
+ },
+ {
+  "id": "armchair-used",
+  "name": "Oatmeal armchair (second-hand)",
+  "category": "armchair",
+  "rooms": [
+   "living_room"
+  ],
+  "price": 45,
+  "currency": "GBP",
+  "w": 80,
+  "d": 80,
+  "h": 85,
+  "colour": "#B9AE9E",
+  "colourName": "oatmeal",
+  "tone": "light",
+  "styles": [
+   "cosy",
+   "scandi"
+  ],
+  "priority": "soon",
+  "lifespanYears": 5,
+  "resaleRate": 0.65,
+  "condition": "used",
+  "url": null,
+  "source": "Sample data (illustrative prices)"
+ },
+ {
+  "id": "coffee-oak",
+  "name": "Oak coffee table",
+  "category": "coffee_table",
+  "rooms": [
+   "living_room"
+  ],
+  "price": 69,
+  "currency": "GBP",
+  "w": 100,
+  "d": 55,
+  "h": 45,
+  "colour": "#C49A6C",
+  "colourName": "oak",
+  "tone": "wood",
+  "styles": [
+   "scandi",
+   "cosy"
+  ],
+  "priority": "soon",
+  "lifespanYears": 8,
+  "resaleRate": 0.35,
+  "condition": "new",
+  "url": null,
+  "source": "Sample data (illustrative prices)"
+ },
+ {
+  "id": "coffee-glass",
+  "name": "Glass-top coffee table",
+  "category": "coffee_table",
+  "rooms": [
+   "living_room"
+  ],
+  "price": 89,
+  "currency": "GBP",
+  "w": 110,
+  "d": 60,
+  "h": 42,
+  "colour": "#CFE3E0",
+  "colourName": "clear glass",
+  "tone": "light",
+  "styles": [
+   "minimal",
+   "bold"
+  ],
+  "priority": "soon",
+  "lifespanYears": 8,
+  "resaleRate": 0.3,
+  "condition": "new",
+  "url": null,
+  "source": "Sample data (illustrative prices)"
+ },
+ {
+  "id": "coffee-industrial",
+  "name": "Steel and mango wood coffee table",
+  "category": "coffee_table",
+  "rooms": [
+   "living_room"
+  ],
+  "price": 55,
+  "currency": "GBP",
+  "w": 100,
+  "d": 50,
+  "h": 45,
+  "colour": "#4A4A4A",
+  "colourName": "dark steel",
+  "tone": "dark",
+  "styles": [
+   "industrial"
+  ],
+  "priority": "soon",
+  "lifespanYears": 8,
+  "resaleRate": 0.35,
+  "condition": "new",
+  "url": null,
+  "source": "Sample data (illustrative prices)"
+ },
+ {
+  "id": "tvstand-white",
+  "name": "White TV stand",
+  "category": "tv_stand",
+  "rooms": [
+   "living_room"
+  ],
+  "price": 49,
+  "currency": "GBP",
+  "w": 120,
+  "d": 40,
+  "h": 50,
+  "colour": "#F2F2EF",
+  "colourName": "white",
+  "tone": "light",
+  "styles": [
+   "minimal"
+  ],
+  "priority": "later",
+  "lifespanYears": 6,
+  "resaleRate": 0.3,
+  "condition": "new",
+  "url": null,
+  "source": "Sample data (illustrative prices)"
+ },
+ {
+  "id": "tvstand-oak",
+  "name": "Oak-effect TV stand",
+  "category": "tv_stand",
+  "rooms": [
+   "living_room"
+  ],
+  "price": 99,
+  "currency": "GBP",
+  "w": 150,
+  "d": 40,
+  "h": 50,
+  "colour": "#C49A6C",
+  "colourName": "oak",
+  "tone": "wood",
+  "styles": [
+   "scandi",
+   "cosy"
+  ],
+  "priority": "later",
+  "lifespanYears": 8,
+  "resaleRate": 0.35,
+  "condition": "new",
+  "url": null,
+  "source": "Sample data (illustrative prices)"
+ },
+ {
+  "id": "shelf-tall-white",
+  "name": "Tall white bookcase",
+  "category": "bookshelf",
+  "rooms": [
+   "living_room",
+   "home_office",
+   "bedroom"
+  ],
+  "price": 45,
+  "currency": "GBP",
+  "w": 80,
+  "d": 30,
+  "h": 200,
+  "colour": "#F2F2EF",
+  "colourName": "white",
+  "tone": "light",
+  "styles": [
+   "minimal",
+   "scandi"
+  ],
+  "priority": "soon",
+  "lifespanYears": 6,
+  "resaleRate": 0.3,
+  "condition": "new",
+  "url": null,
+  "source": "Sample data (illustrative prices)"
+ },
+ {
+  "id": "shelf-ladder-black",
+  "name": "Black ladder shelf",
+  "category": "bookshelf",
+  "rooms": [
+   "living_room",
+   "home_office"
+  ],
+  "price": 39,
+  "currency": "GBP",
+  "w": 60,
+  "d": 35,
+  "h": 180,
+  "colour": "#2B2B2B",
+  "colourName": "black",
+  "tone": "dark",
+  "styles": [
+   "industrial"
+  ],
+  "priority": "later",
+  "lifespanYears": 6,
+  "resaleRate": 0.3,
+  "condition": "new",
+  "url": null,
+  "source": "Sample data (illustrative prices)"
+ },
+ {
+  "id": "shelf-cube-used",
+  "name": "White cube shelving unit (second-hand)",
+  "category": "bookshelf",
+  "rooms": [
+   "living_room",
+   "home_office",
+   "bedroom"
+  ],
+  "price": 25,
+  "currency": "GBP",
+  "w": 77,
+  "d": 39,
+  "h": 147,
+  "colour": "#F2F2EF",
+  "colourName": "white",
+  "tone": "light",
+  "styles": [
+   "minimal",
+   "scandi"
+  ],
+  "priority": "soon",
+  "lifespanYears": 8,
+  "resaleRate": 0.7,
+  "condition": "used",
+  "url": null,
+  "source": "Sample data (illustrative prices)"
+ },
+ {
+  "id": "desk-white",
+  "name": "White compact desk",
+  "category": "desk",
+  "rooms": [
+   "home_office",
+   "bedroom"
+  ],
+  "price": 45,
+  "currency": "GBP",
+  "w": 100,
+  "d": 50,
+  "h": 75,
+  "colour": "#F2F2EF",
+  "colourName": "white",
+  "tone": "light",
+  "styles": [
+   "minimal",
+   "scandi"
+  ],
+  "priority": "essential",
+  "lifespanYears": 5,
+  "resaleRate": 0.3,
+  "condition": "new",
+  "url": null,
+  "source": "Sample data (illustrative prices)"
+ },
+ {
+  "id": "desk-oak-large",
+  "name": "Large oak-effect desk",
+  "category": "desk",
+  "rooms": [
+   "home_office",
+   "bedroom"
+  ],
+  "price": 129,
+  "currency": "GBP",
+  "w": 140,
+  "d": 70,
+  "h": 75,
+  "colour": "#C49A6C",
+  "colourName": "oak",
+  "tone": "wood",
+  "styles": [
+   "scandi",
+   "cosy"
+  ],
+  "priority": "essential",
+  "lifespanYears": 8,
+  "resaleRate": 0.35,
+  "condition": "new",
+  "url": null,
+  "source": "Sample data (illustrative prices)"
+ },
+ {
+  "id": "desk-standing",
+  "name": "Black electric standing desk",
+  "category": "desk",
+  "rooms": [
+   "home_office"
+  ],
+  "price": 249,
+  "currency": "GBP",
+  "w": 120,
+  "d": 60,
+  "h": 75,
+  "colour": "#2B2B2B",
+  "colourName": "black",
+  "tone": "dark",
+  "styles": [
+   "industrial",
+   "minimal"
+  ],
+  "priority": "soon",
+  "lifespanYears": 8,
+  "resaleRate": 0.45,
+  "condition": "new",
+  "url": null,
+  "source": "Sample data (illustrative prices)"
+ },
+ {
+  "id": "desk-used",
+  "name": "Wooden desk (second-hand)",
+  "category": "desk",
+  "rooms": [
+   "home_office",
+   "bedroom"
+  ],
+  "price": 30,
+  "currency": "GBP",
+  "w": 110,
+  "d": 55,
+  "h": 75,
+  "colour": "#8C6A4F",
+  "colourName": "dark wood",
+  "tone": "wood",
+  "styles": [
+   "cosy"
+  ],
+  "priority": "essential",
+  "lifespanYears": 6,
+  "resaleRate": 0.7,
+  "condition": "used",
+  "url": null,
+  "source": "Sample data (illustrative prices)"
+ },
+ {
+  "id": "chair-mesh",
+  "name": "Black mesh office chair",
+  "category": "office_chair",
+  "rooms": [
+   "home_office",
+   "bedroom"
+  ],
+  "price": 69,
+  "currency": "GBP",
+  "w": 60,
+  "d": 60,
+  "h": 100,
+  "colour": "#2B2B2B",
+  "colourName": "black",
+  "tone": "dark",
+  "styles": [
+   "minimal",
+   "industrial"
+  ],
+  "priority": "essential",
+  "lifespanYears": 4,
+  "resaleRate": 0.25,
+  "condition": "new",
+  "url": null,
+  "source": "Sample data (illustrative prices)"
+ },
+ {
+  "id": "chair-ergonomic",
+  "name": "Ergonomic office chair",
+  "category": "office_chair",
+  "rooms": [
+   "home_office",
+   "bedroom"
+  ],
+  "price": 179,
+  "currency": "GBP",
+  "w": 65,
+  "d": 65,
+  "h": 110,
+  "colour": "#3D4A5C",
+  "colourName": "slate",
+  "tone": "dark",
+  "styles": [
+   "minimal"
+  ],
+  "priority": "essential",
+  "lifespanYears": 7,
+  "resaleRate": 0.4,
+  "condition": "new",
+  "url": null,
+  "source": "Sample data (illustrative prices)"
+ },
+ {
+  "id": "chair-ergonomic-used",
+  "name": "Ergonomic office chair (second-hand)",
+  "category": "office_chair",
+  "rooms": [
+   "home_office",
+   "bedroom"
+  ],
+  "price": 60,
+  "currency": "GBP",
+  "w": 65,
+  "d": 65,
+  "h": 110,
+  "colour": "#3A3A3A",
+  "colourName": "charcoal",
+  "tone": "dark",
+  "styles": [
+   "minimal",
+   "industrial"
+  ],
+  "priority": "essential",
+  "lifespanYears": 6,
+  "resaleRate": 0.7,
+  "condition": "used",
+  "url": null,
+  "source": "Sample data (illustrative prices)"
+ },
+ {
+  "id": "filing-grey",
+  "name": "Grey steel filing cabinet",
+  "category": "filing_cabinet",
+  "rooms": [
+   "home_office"
+  ],
+  "price": 59,
+  "currency": "GBP",
+  "w": 40,
+  "d": 50,
+  "h": 70,
+  "colour": "#6E7B75",
+  "colourName": "grey",
+  "tone": "dark",
+  "styles": [
+   "industrial"
+  ],
+  "priority": "later",
+  "lifespanYears": 10,
+  "resaleRate": 0.35,
+  "condition": "new",
+  "url": null,
+  "source": "Sample data (illustrative prices)"
+ },
+ {
+  "id": "dining-round",
+  "name": "Round wooden dining table (seats 4)",
+  "category": "dining_table",
+  "rooms": [
+   "dining"
+  ],
+  "price": 89,
+  "currency": "GBP",
+  "w": 90,
+  "d": 90,
+  "h": 75,
+  "colour": "#D9B98C",
+  "colourName": "natural pine",
+  "tone": "wood",
+  "styles": [
+   "scandi",
+   "cosy"
+  ],
+  "priority": "essential",
+  "lifespanYears": 8,
+  "resaleRate": 0.35,
+  "condition": "new",
+  "url": null,
+  "source": "Sample data (illustrative prices)"
+ },
+ {
+  "id": "dining-rect-black",
+  "name": "Black metal dining table (seats 4)",
+  "category": "dining_table",
+  "rooms": [
+   "dining"
+  ],
+  "price": 129,
+  "currency": "GBP",
+  "w": 120,
+  "d": 75,
+  "h": 75,
+  "colour": "#2B2B2B",
+  "colourName": "black",
+  "tone": "dark",
+  "styles": [
+   "industrial",
+   "minimal"
+  ],
+  "priority": "essential",
+  "lifespanYears": 8,
+  "resaleRate": 0.35,
+  "condition": "new",
+  "url": null,
+  "source": "Sample data (illustrative prices)"
+ },
+ {
+  "id": "dining-oak-used",
+  "name": "Oak dining table (second-hand, seats 6)",
+  "category": "dining_table",
+  "rooms": [
+   "dining"
+  ],
+  "price": 60,
+  "currency": "GBP",
+  "w": 140,
+  "d": 80,
+  "h": 75,
+  "colour": "#B08850",
+  "colourName": "oak",
+  "tone": "wood",
+  "styles": [
+   "cosy",
+   "scandi"
+  ],
+  "priority": "essential",
+  "lifespanYears": 8,
+  "resaleRate": 0.7,
+  "condition": "used",
+  "url": null,
+  "source": "Sample data (illustrative prices)"
+ },
+ {
+  "id": "dchair-wood",
+  "name": "Wooden dining chair",
+  "category": "dining_chair",
+  "rooms": [
+   "dining"
+  ],
+  "price": 29,
+  "currency": "GBP",
+  "w": 45,
+  "d": 50,
+  "h": 80,
+  "colour": "#D9B98C",
+  "colourName": "natural pine",
+  "tone": "wood",
+  "styles": [
+   "scandi",
+   "cosy"
+  ],
+  "priority": "essential",
+  "lifespanYears": 6,
+  "resaleRate": 0.3,
+  "condition": "new",
+  "url": null,
+  "source": "Sample data (illustrative prices)"
+ },
+ {
+  "id": "dchair-metal",
+  "name": "Black metal dining chair",
+  "category": "dining_chair",
+  "rooms": [
+   "dining"
+  ],
+  "price": 25,
+  "currency": "GBP",
+  "w": 45,
+  "d": 50,
+  "h": 80,
+  "colour": "#2B2B2B",
+  "colourName": "black",
+  "tone": "dark",
+  "styles": [
+   "industrial",
+   "minimal"
+  ],
+  "priority": "essential",
+  "lifespanYears": 6,
+  "resaleRate": 0.3,
+  "condition": "new",
+  "url": null,
+  "source": "Sample data (illustrative prices)"
+ },
+ {
+  "id": "sideboard-green",
+  "name": "Green sideboard",
+  "category": "sideboard",
+  "rooms": [
+   "dining",
+   "living_room"
+  ],
+  "price": 149,
+  "currency": "GBP",
+  "w": 140,
+  "d": 40,
+  "h": 80,
+  "colour": "#2F5D50",
+  "colourName": "forest green",
+  "tone": "colour",
+  "styles": [
+   "bold",
+   "scandi"
+  ],
+  "priority": "later",
+  "lifespanYears": 8,
+  "resaleRate": 0.35,
+  "condition": "new",
+  "url": null,
+  "source": "Sample data (illustrative prices)"
+ },
+ {
+  "id": "bath-cabinet-tall",
+  "name": "Tall white bathroom cabinet",
+  "category": "bath_cabinet",
+  "rooms": [
+   "bathroom"
+  ],
+  "price": 59,
+  "currency": "GBP",
+  "w": 35,
+  "d": 30,
+  "h": 170,
+  "colour": "#F2F2EF",
+  "colourName": "white",
+  "tone": "light",
+  "styles": [
+   "minimal",
+   "scandi"
+  ],
+  "priority": "essential",
+  "lifespanYears": 6,
+  "resaleRate": 0.2,
+  "condition": "new",
+  "url": null,
+  "source": "Sample data (illustrative prices)"
+ },
+ {
+  "id": "bath-ladder-bamboo",
+  "name": "Bamboo ladder shelf",
+  "category": "bath_shelf",
+  "rooms": [
+   "bathroom"
+  ],
+  "price": 35,
+  "currency": "GBP",
+  "w": 45,
+  "d": 30,
+  "h": 160,
+  "colour": "#C8A878",
+  "colourName": "bamboo",
+  "tone": "wood",
+  "styles": [
+   "scandi",
+   "cosy"
+  ],
+  "priority": "soon",
+  "lifespanYears": 4,
+  "resaleRate": 0.2,
+  "condition": "new",
+  "url": null,
+  "source": "Sample data (illustrative prices)"
+ },
+ {
+  "id": "towel-stand-black",
+  "name": "Black towel stand",
+  "category": "towel_stand",
+  "rooms": [
+   "bathroom"
+  ],
+  "price": 22,
+  "currency": "GBP",
+  "w": 50,
+  "d": 30,
+  "h": 85,
+  "colour": "#2B2B2B",
+  "colourName": "black",
+  "tone": "dark",
+  "styles": [
+   "industrial",
+   "minimal"
+  ],
+  "priority": "soon",
+  "lifespanYears": 6,
+  "resaleRate": 0.25,
+  "condition": "new",
+  "url": null,
+  "source": "Sample data (illustrative prices)"
+ },
+ {
+  "id": "hamper-wicker",
+  "name": "Wicker laundry basket",
+  "category": "hamper",
+  "rooms": [
+   "bathroom",
+   "bedroom"
+  ],
+  "price": 18,
+  "currency": "GBP",
+  "w": 40,
+  "d": 35,
+  "h": 55,
+  "colour": "#C8A878",
+  "colourName": "wicker",
+  "tone": "wood",
+  "styles": [
+   "cosy"
+  ],
+  "priority": "later",
+  "lifespanYears": 3,
+  "resaleRate": 0.1,
+  "condition": "new",
+  "url": null,
+  "source": "Sample data (illustrative prices)"
+ },
+ {
+  "id": "stool-bamboo",
+  "name": "Bamboo bathroom stool",
+  "category": "stool",
+  "rooms": [
+   "bathroom"
+  ],
+  "price": 19,
+  "currency": "GBP",
+  "w": 40,
+  "d": 30,
+  "h": 45,
+  "colour": "#C8A878",
+  "colourName": "bamboo",
+  "tone": "wood",
+  "styles": [
+   "scandi",
+   "cosy"
+  ],
+  "priority": "later",
+  "lifespanYears": 4,
+  "resaleRate": 0.2,
+  "condition": "new",
+  "url": null,
+  "source": "Sample data (illustrative prices)"
+ },
+ {
+  "id": "shoe-rack",
+  "name": "Two-tier shoe rack",
+  "category": "shoe_rack",
+  "rooms": [
+   "living_room",
+   "bedroom"
+  ],
+  "price": 20,
+  "currency": "GBP",
+  "w": 60,
+  "d": 30,
+  "h": 50,
+  "colour": "#6E7B75",
+  "colourName": "grey",
+  "tone": "dark",
+  "styles": [
+   "minimal",
+   "industrial"
+  ],
+  "priority": "later",
+  "lifespanYears": 5,
+  "resaleRate": 0.2,
+  "condition": "new",
+  "url": null,
+  "source": "Sample data (illustrative prices)"
+ }
+]

@@ -1,0 +1,145 @@
+{
+  "name": "NestEgg: normalise product listing",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "normalise-product",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "a1f0c6b2-1111-4c55-9a01-000000000001",
+      "name": "Listing received",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "webhookId": "3d2b5e0e-7a7b-4f0e-9f11-6c1f1b2a0001"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Takes the pasted listing and builds a request for Claude.\nconst body = $input.first().json.body || {};\nconst text = String(body.text || '').slice(0, 6000);\nconst url = body.url || null;\n\nconst prompt = `You extract furniture product data for a budgeting app for first-time movers.\nRead the listing below and return ONLY a JSON object, no prose, no code fences, with these keys:\n- name: short product name (max 80 chars)\n- category: one of bed, wardrobe, drawers, bedside, mirror, floor_lamp, sofa, armchair, coffee_table, tv_stand, bookshelf, desk, office_chair, filing_cabinet, dining_table, dining_chair, sideboard, bath_cabinet, bath_shelf, towel_stand, hamper, stool, shoe_rack\n- price: number in GBP (convert if needed; null if absent)\n- w, d, h: width, depth, height in centimetres as numbers (convert mm/inches; width is the longest horizontal side; null if absent)\n- colour: a hex colour that best matches the main finish, e.g. \"#C49A6C\"\n- colourName: plain words, e.g. \"oak\"\n- tone: one of light, wood, dark, colour\n- styles: 1-2 of minimal, scandi, industrial, cosy, bold\n- condition: \"new\" or \"used\"\n- quality: one of budget, mid, premium (judge from materials, brand positioning, price for the category)\n\nListing:\n\"\"\"\n${text}\n\"\"\"`;\n\nreturn [{ json: { url, request: {\n  model: 'claude-haiku-5-5',\n  max_tokens: 600,\n  messages: [{ role: 'user', content: prompt }]\n} } }];"
+      },
+      "id": "a1f0c6b2-1111-4c55-9a01-000000000002",
+      "name": "Build Claude request",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        240,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-api-key",
+              "value": "PASTE_YOUR_ANTHROPIC_API_KEY"
+            },
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.request) }}",
+        "options": {
+          "timeout": 45000
+        }
+      },
+      "id": "a1f0c6b2-1111-4c55-9a01-000000000003",
+      "name": "Ask Claude",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        480,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parses Claude's answer and adds NestEgg's finance estimates.\nconst res = $input.first().json;\nconst text = (res.content || []).filter(c => c.type === 'text').map(c => c.text).join('');\nlet p;\ntry {\n  p = JSON.parse(text.replace(/```json|```/g, '').trim());\n} catch (e) {\n  return [{ json: { error: \"Couldn't read product details from that listing.\" } }];\n}\n\n// Typical lifespan (years), share of price recovered when resold after ~1 year,\n// buying priority for a first-time mover, and rooms it belongs in.\nconst CATEGORY = {\n  bed:            [7, 0.30, 'essential', ['bedroom']],\n  wardrobe:       [6, 0.30, 'essential', ['bedroom']],\n  drawers:        [6, 0.30, 'soon',      ['bedroom']],\n  bedside:        [6, 0.30, 'soon',      ['bedroom']],\n  mirror:         [8, 0.35, 'later',     ['bedroom']],\n  floor_lamp:     [5, 0.30, 'later',     ['bedroom', 'living_room', 'home_office']],\n  sofa:           [6, 0.25, 'essential', ['living_room']],\n  armchair:       [6, 0.30, 'soon',      ['living_room']],\n  coffee_table:   [8, 0.35, 'soon',      ['living_room']],\n  tv_stand:       [7, 0.30, 'later',     ['living_room']],\n  bookshelf:      [7, 0.30, 'soon',      ['living_room', 'home_office', 'bedroom']],\n  desk:           [6, 0.35, 'essential', ['home_office', 'bedroom']],\n  office_chair:   [5, 0.30, 'essential', ['home_office', 'bedroom']],\n  filing_cabinet: [10, 0.35, 'later',    ['home_office']],\n  dining_table:   [8, 0.35, 'essential', ['dining']],\n  dining_chair:   [6, 0.30, 'essential', ['dining']],\n  sideboard:      [8, 0.35, 'later',     ['dining', 'living_room']],\n  bath_cabinet:   [6, 0.20, 'essential', ['bathroom']],\n  bath_shelf:     [4, 0.20, 'soon',      ['bathroom']],\n  towel_stand:    [6, 0.25, 'soon',      ['bathroom']],\n  hamper:         [3, 0.10, 'later',     ['bathroom', 'bedroom']],\n  stool:          [4, 0.20, 'later',     ['bathroom']],\n  shoe_rack:      [5, 0.20, 'later',     ['living_room', 'bedroom']],\n};\nconst [life, resale, priority, rooms] = CATEGORY[p.category] || [6, 0.25, 'soon', ['living_room']];\n\n// Better-made furniture lasts longer and holds its value; used items have\n// already lost most of their depreciation, so they resell closer to what you paid.\nconst qualityLife = { budget: 0.7, mid: 1.0, premium: 1.4 }[p.quality] || 1.0;\nconst qualityResale = { budget: -0.08, mid: 0, premium: 0.1 }[p.quality] || 0;\nlet resaleRate = resale + qualityResale;\nif (p.condition === 'used') resaleRate = Math.min(0.75, resaleRate + 0.3);\n\nreturn [{ json: {\n  name: p.name,\n  category: p.category,\n  price: p.price,\n  w: p.w, d: p.d, h: p.h,\n  colour: p.colour,\n  colourName: p.colourName,\n  tone: p.tone,\n  styles: p.styles,\n  condition: p.condition,\n  rooms,\n  priority,\n  lifespanYears: Math.round(life * qualityLife * 10) / 10,\n  resaleRate: Math.round(Math.max(0.05, resaleRate) * 100) / 100,\n  url: $('Build Claude request').first().json.url,\n} }];"
+      },
+      "id": "a1f0c6b2-1111-4c55-9a01-000000000004",
+      "name": "Add finance estimates",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        720,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "firstIncomingItem",
+        "options": {}
+      },
+      "id": "a1f0c6b2-1111-4c55-9a01-000000000005",
+      "name": "Send product back",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        960,
+        0
+      ]
+    }
+  ],
+  "connections": {
+    "Listing received": {
+      "main": [
+        [
+          {
+            "node": "Build Claude request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Claude request": {
+      "main": [
+        [
+          {
+            "node": "Ask Claude",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ask Claude": {
+      "main": [
+        [
+          {
+            "node": "Add finance estimates",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Add finance estimates": {
+      "main": [
+        [
+          {
+            "node": "Send product back",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {}
+}
